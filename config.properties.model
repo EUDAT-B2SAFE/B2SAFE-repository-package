@@ -1,0 +1,45 @@
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+
+############################################
+# rp_console parameters
+############################################
+# File listing the DO to replicate
+tmpLocalIngestFileList = C:\\tmp\\RepoPackToReplicate\\DataObjectToReplicate.txt
+# File storing information about ongoing replication
+replicationResultFile = C:\\tmp\\result\\OngoingReplicationResult.txt 
+# File listing the DO to delete
+tmpLocalDeleteFileList = C:\\tmp\\command\\DataObjectToDelete.txt
+
+############################################
+# B2SAFE parameters
+############################################
+# B2SAFE_TRANS_PROTOCOL values limited to "irods" for now on
+B2SAFE_TRANS_PROTOCOL irods 
+
+
+# Parameters for the iRods based file transfer. To be defined with EUDAT partner
+HOST = ariane-test.cines.fr
+PORT = 1247
+USER_NAME = repopack
+PASSWORD = *********
+HOME_DIRECTORY = /TheZone/home/project_name/ingest_collection
+ZONE = TheZone
+DEFAULT_STORAGE = transResc
+
+
+############################################
+#  NOT USED
+############################################
+
+DSSFileResult=.DSSfile
+
+
+
+
+
+
+scratchDirectory = scratch/
+requestDirectory = request/
+
