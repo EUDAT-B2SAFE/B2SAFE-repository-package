@@ -19,16 +19,29 @@ import org.apache.log4j.Logger;
 import org.irods.jargon.core.exception.JargonException;
 import org.irods.jargon.core.utils.LocalFileUtils;
 
+/**
+ * This class represents the data objects of a repository or a subset of a repository
+ * All those data objects have the same replication target.
+ * It is necessary to create an instance of this class to start using rp_core features.
+ * It uses the properties from the config.properties file to get the replication parameters
+ * 
+ * The class offers methods to launch the replication actions
+ * 
+ * @author "S. Coutin (CINES)"
+ *
+ */
 public class DataSet {
-	public Object name;
+	// public Object name;
 	protected static Logger log=null;
     private Properties prop=null;
     private InputStream input =null;
     
     private ReplicationService replicationService = null;
 
-
-	public DataSet(){
+/**
+ * Constructor for the DataSet class
+ */
+    public DataSet(){
 		new Log();
         log= Log.getLogger(DataSet.class.getName());
         
@@ -54,7 +67,15 @@ public class DataSet {
 		replicationService = new ReplicationService();
 	}
 	
-	public boolean initB2safeConnection(){
+/**
+ * Initialize the connection to EUDAT B2SAFE service
+ * Must be done before launching any action
+ * 
+ * @return 
+ * 		true if connection is successful,
+ * 		false if not 
+ */
+    public boolean initB2safeConnection(){
 		try {
 			return replicationService.initialize(prop).isSuccessful();
 		} catch (JargonException ex) {
@@ -62,7 +83,10 @@ public class DataSet {
 			return false;
 		}
 	}
-	
+
+    /**
+     * To remove
+     */
 	public void testConnection() {
 		log.info("Begin method DataSet.TestConnection");
 		if (this.initB2safeConnection())
@@ -72,6 +96,13 @@ public class DataSet {
 		log.debug("End method DataSet.TestConnection");
 	}
 	
+	/**
+	 * Replication of one data object from the repository to EUDAT B2SAFE
+	 * @param doToReplicate
+	 * 		Description of the data object to replicate in B2SAFE
+	 * @return 
+	 * 		Description of the data object with additional information resulting from the replication
+	 */
 	public DataObject replicateOneDO(DataObject doToReplicate) {
 		Map<String, String> metadataInit = null;
 		Map<String, AVUMetaData> metadataFinal = null;
@@ -113,7 +144,16 @@ public class DataSet {
 			return replicaResult;
 		} 
 	}
-	
+
+	/**
+	 * Replicate a list of data objects from the repository to EUDAT B2SAFE.
+	 * It tries to replicate each of the list data objects, even if one replication fails
+	 * 
+	 * @see replicateOneDO
+	 * @param listDOToReplicate
+	 * @return
+	 * 		The list of data objects with the replication result additional information
+	 */
 	public ArrayList<DataObject> replicateAllRequestedDO(ArrayList<DataObject> listDOToReplicate) {
 		ArrayList<DataObject> replicaResult = new ArrayList<DataObject>();
 
@@ -123,6 +163,16 @@ public class DataSet {
 		return replicaResult;
 	}
 
+	/**
+	 * FOR TEST PURPOSE ONLY
+	 * This method deletes a data object (ie a file) in EUDAT B2SAFE
+	 * It must be used carefully as it can create a discrepancy between repository and replication
+	 * 
+	 * On the B2SAFE side, a trigger manages the deletion of first replica PID record
+	 * 
+	 * @param dataObject
+	 * 		in this release, the DO to delete is identified by the fileName and the remoteDirPath
+	 */
 	public void deleteDO(DataObject dataObject) {
 		try {
 			String fileAbsolutePath = prop.getProperty("HOME_DIRECTORY") + dataObject.getRemoteDirPath()+dataObject.getFileName();
@@ -136,6 +186,13 @@ public class DataSet {
 		}		
 	}
 
+	/**
+	 * FOR TEST PURPOSE ONLY
+	 * Deletes a list of data objects
+	 * 
+	 * @see deleteDO
+	 * @param listDOToDelete
+	 */
 	public void deleteAllRequestedDO(ArrayList<DataObject> listDOToDelete) {
 
 		for (DataObject dataObject : listDOToDelete) {

@@ -14,7 +14,7 @@ import fr.cines.eudat.repopack.rp_core.AVUMetaData;
 import fr.cines.eudat.repopack.rp_core.DataObject;
 import fr.cines.eudat.repopack.rp_core.DataSet;
 
-public class FileBasedInterface {
+class FileBasedInterface {
 
 	protected ArrayList<DataObject> initToReplicateDOList(){
 		BufferedReader reader=null;

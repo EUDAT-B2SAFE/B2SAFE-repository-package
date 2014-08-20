@@ -31,9 +31,9 @@ import org.irods.jargon.core.transfer.TransferControlBlock;
 import org.irods.jargon.core.utils.LocalFileUtils;
 
 
-public class ReplicationService {
+class ReplicationService {
 	
-	public enum CONFIGURATION {
+	private enum CONFIGURATION {
 		HOST,
 		PORT,
 		USER_NAME,
@@ -48,7 +48,7 @@ public class ReplicationService {
 	static IRODSAccount irodsAccount = null;
 	static Properties configuration = null;
 	
-	public static AuthResponse initialize(Properties configuration) throws JargonException {
+	protected static AuthResponse initialize(Properties configuration) throws JargonException {
 
 //		SCn : change to use the properties variable passed in parameter
 //		configuration = new Properties();
@@ -83,24 +83,24 @@ public class ReplicationService {
     	return response;    	
 	}
 	
-	public static boolean isInitialized() {
+	protected static boolean isInitialized() {
 		return irodsFileSystem != null;
 	}
 	
-	public void replicate(String localFileName, Map<String, String> metadata) throws JargonException, IOException {
+	protected void replicate(String localFileName, Map<String, String> metadata) throws JargonException, IOException {
 		replicate(localFileName, metadata, false);	
 	}
 
-	public void replicate(String localFileName, Map<String, String> metadata, boolean force) throws JargonException, IOException {
+	protected void replicate(String localFileName, Map<String, String> metadata, boolean force) throws JargonException, IOException {
 		String defaultRemoteLocation = configuration.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name());
 		replicate(localFileName, defaultRemoteLocation, metadata);	
 	}
 	
-	public void replicate(String localFileName, String remoteDirectory, Map<String, String> metadata) throws JargonException, IOException {
+	protected void replicate(String localFileName, String remoteDirectory, Map<String, String> metadata) throws JargonException, IOException {
 		replicate(localFileName, remoteDirectory, metadata, false);
 	}
 	
-	public void replicate(String localFileName, String remoteDirectory, Map<String, String> metadata, boolean force) throws JargonException, IOException {
+	protected void replicate(String localFileName, String remoteDirectory, Map<String, String> metadata, boolean force) throws JargonException, IOException {
 		if(overrideJargonProperties!=null) {
 			irodsFileSystem.getIrodsSession().setJargonProperties(overrideJargonProperties);
 		}
@@ -148,11 +148,11 @@ public class ReplicationService {
 		}
 	}
 	
-	public boolean delete(String path) throws JargonException {
+	protected boolean delete(String path) throws JargonException {
 		return delete(path, false);
 	}
 
-	public boolean delete(String path, boolean force) throws JargonException {
+	protected boolean delete(String path, boolean force) throws JargonException {
 		IRODSFileFactory irodsFileFactory = irodsFileSystem .getIRODSFileFactory(irodsAccount);
 		IRODSFile remoteFile = irodsFileFactory.instanceIRODSFile(path);
 		if(force) {
@@ -162,7 +162,7 @@ public class ReplicationService {
 		}
 	}
 	
-	public void retriveFile(String remoteFileName, String localFileName) throws JargonException {
+	protected void retriveFile(String remoteFileName, String localFileName) throws JargonException {
 		if(overrideJargonProperties!=null) {
 			irodsFileSystem.getIrodsSession().setJargonProperties(overrideJargonProperties);
 		}		
@@ -179,7 +179,7 @@ public class ReplicationService {
     	dataTransferOperations.getOperation(remoteFile.getAbsolutePath(), localFile.getAbsolutePath(), "", null, null);    	
 	}
 
-    public void addMetadataToDataObject(String filePath, Map<String, String> metadata) throws JargonException {
+	protected void addMetadataToDataObject(String filePath, Map<String, String> metadata) throws JargonException {
     	DataObjectAO dataObjectAO = irodsFileSystem.getIRODSAccessObjectFactory().getDataObjectAO(irodsAccount);
     	for(Map.Entry<String, String> md : metadata.entrySet()) {
     		AvuData data = AvuData.instance(md.getKey(), md.getValue(), "");
@@ -187,7 +187,7 @@ public class ReplicationService {
     	}
     }
     
-    public void modifyMetadataToDataObject(String filePath, Map<String, String> metadata) throws JargonException {
+	protected void modifyMetadataToDataObject(String filePath, Map<String, String> metadata) throws JargonException {
     	DataObjectAO dataObjectAO = irodsFileSystem.getIRODSAccessObjectFactory().getDataObjectAO(irodsAccount);
     	for(Map.Entry<String, String> md : metadata.entrySet()) {
     		AvuData data = AvuData.instance(md.getKey(), md.getValue(), "");
@@ -195,7 +195,7 @@ public class ReplicationService {
     	}
     }
     
-    public void addMetadataToCollection(String collectionPath, Map<String, String> metadata) throws JargonException {
+	protected void addMetadataToCollection(String collectionPath, Map<String, String> metadata) throws JargonException {
     	CollectionAO collectionAO = irodsFileSystem.getIRODSAccessObjectFactory().getCollectionAO(irodsAccount);
     	for(Map.Entry<String, String> md : metadata.entrySet()) {
     		AvuData data = AvuData.instance(md.getKey(), md.getValue(), "");
@@ -203,7 +203,7 @@ public class ReplicationService {
     	}
     }
     
-    public void modifyMetadataToCollection(String collectionPath, Map<String, String> metadata) throws JargonException {
+	protected void modifyMetadataToCollection(String collectionPath, Map<String, String> metadata) throws JargonException {
     	CollectionAO collectionAO = irodsFileSystem.getIRODSAccessObjectFactory().getCollectionAO(irodsAccount);
     	for(Map.Entry<String, String> md : metadata.entrySet()) {
     		AvuData data = AvuData.instance(md.getKey(), md.getValue(), "");
@@ -212,7 +212,7 @@ public class ReplicationService {
     }
     
     // SCn add a method to read the iCat attributes for a data object stored in B2SAFE
-    public Map<String, AVUMetaData> getMetadataOfDataObject(String dataObjectAbsolutePath) throws JargonException {
+	protected Map<String, AVUMetaData> getMetadataOfDataObject(String dataObjectAbsolutePath) throws JargonException {
     	Map<String, AVUMetaData> eudatMetadata = new HashMap<String, AVUMetaData>();
     	DataObjectAO dataObjectAO = irodsFileSystem.getIRODSAccessObjectFactory().getDataObjectAO(irodsAccount);
     	
@@ -227,16 +227,16 @@ public class ReplicationService {
     }
     // End SCn
     
-    public List<String> list() throws JargonException {
+	protected List<String> list() throws JargonException {
     	return list(false);    	
     }
     
-    public List<String> list(boolean returnAbsPath) throws JargonException {
+	protected List<String> list(boolean returnAbsPath) throws JargonException {
     	String defaultRemoteLocation = configuration.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name());
     	return list(defaultRemoteLocation, returnAbsPath);
     }
     
-    public List<String> list(String remoteDirectory, boolean returnAbsPath) throws JargonException {
+	protected List<String> list(String remoteDirectory, boolean returnAbsPath) throws JargonException {
     	IRODSFileFactory irodsFileFactory = irodsFileSystem .getIRODSFileFactory(irodsAccount);    	
     	IRODSFile irodsDirectory = irodsFileFactory.instanceIRODSFile(irodsAccount.getHomeDirectory() + remoteDirectory);    	
     	String[] list = irodsDirectory.list();
@@ -251,7 +251,7 @@ public class ReplicationService {
     	return retList;
     }
 
-    public List<String> search(Map<String, String> metadata) throws JargonException, JargonQueryException {
+	protected List<String> search(Map<String, String> metadata) throws JargonException, JargonQueryException {
     	DataObjectAO cao = irodsFileSystem.getIRODSAccessObjectFactory().getDataObjectAO(irodsAccount);
     	List<AVUQueryElement> queryElements = new ArrayList<AVUQueryElement>();
     	for(Map.Entry<String, String> md : metadata.entrySet()) {
@@ -266,15 +266,15 @@ public class ReplicationService {
     	return retList;
     }
         
-    private static SettableJargonProperties overrideJargonProperties = null;
+	protected static SettableJargonProperties overrideJargonProperties = null;
     
-    public static SettableJargonProperties getSettableJargonProperties() {
+	protected static SettableJargonProperties getSettableJargonProperties() {
     	IRODSSession irodsSession = irodsFileSystem.getIrodsSession();
     	overrideJargonProperties = new SettableJargonProperties(irodsSession.getJargonProperties());
 		return overrideJargonProperties;
     }
     
-    public static IRODSServerProperties gerIRODSServerProperties() {
+	protected static IRODSServerProperties gerIRODSServerProperties() {
     	return irodsFileSystem.getIrodsSession()
     				.getDiscoveredServerPropertiesCache()
     				.retrieveIRODSServerProperties(irodsAccount.getHost(), irodsAccount.getZone());

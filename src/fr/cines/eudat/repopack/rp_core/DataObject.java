@@ -3,6 +3,17 @@ package fr.cines.eudat.repopack.rp_core;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class represents a data object from the repository. 
+ * Even if the data object is replicated as a file, additional information (some metadata) describes the object
+ * and its replication.
+ * Getter and setter methods are available to handle the different properties
+ *  
+ * NOTE : This class has the potential to be extended with additional metadata 
+ * 
+ * @author "S. Coutin (CINES)"
+ *
+ */
 public class DataObject {
 	private String repositoryIdentifier;
 	private String fileName;
@@ -106,7 +117,14 @@ public class DataObject {
     public void addOneEudatMetadata (AVUMetaData avu) {
     	this.eudatMetadata.put(avu.getAttribute(), avu);
     }
-        
+
+    /**
+     * Used to convert the data object to a string fitting with the rp_console output file format
+     * NOTE: this method will be removed from the rp_core
+     * 
+     * @return
+     * 		The string representing the data object
+     */
     public String toTextFileOutput() {
         StringBuilder sb= new StringBuilder();
         sb.append(this.fileName + ";");
@@ -119,6 +137,14 @@ public class DataObject {
         sb.append(this.adminStatus +";");
         return sb.toString();  	
     }
+
+    
+    /**
+     * This returns the data object properties on a readable format. Can be used for logging
+     * 
+     * @return
+     * 		The string representing the data object
+     */
     
     @Override
     public String toString()
