@@ -164,7 +164,7 @@ acCheckPasswordStrength(*password) { }
 
 
 
-######### PDU
+######### PDU - CINES resources
 #acSetRescSchemeForCreate {msiSetDefaultResc("demoResc","null"); }
 #acSetRescSchemeForRepl {msiSetDefaultResc("demoResc","null"); }
 acSetRescSchemeForCreate {msiSetDefaultResc("transResc","forced"); }
@@ -266,7 +266,7 @@ acSetMultiReplPerResc { }
 
 
 
-########### PDU
+########### PDU - Remove the hooks for the 'joining mode'. This is temporary
 #	acPostProcForPut {
 #
 #        	ON($objPath like "\*.replicate") {
@@ -288,21 +288,6 @@ acSetMultiReplPerResc { }
 #	}
 #########
 
-########### SCn pour repopak
-
-# Create or update a new PID after a put in the repopack collection
-
-#acPostProcForPut{
-#        on (( $objPath like "/CINESZone/home/repopack/scratch/*" ) &&
-#            ( $objPath != "/CINESZone/home/repopack/scratch/.DSSfile" )) 
-#        {  
-#                writeLine ("serverLog","acPostProcForPut -> addOrUpdatePID (Repository Package) $objPath");
-#                EUDATeiPIDeiChecksumMgmt($objPath,"empty","false",bool("true"),0);
-#                *DSSfile="/CINESZone/home/repopack/scratch/.DSSfile";
-#                EUDATiDSSfileWrite(*DSSfile);
-#        }  
-#}
-###########fin SCn
 
 ########### PDU
 
@@ -364,8 +349,8 @@ acDataDeletePolicy { }
 
 ########### SCn in order to delete the handle when deleting a file
 
-acPostProcForDelete { logInfo( "PDU PostDelete"); EUDATePIDremove($objPath)}
-
+acPostProcForDelete { logInfo( "PDU PostDelete"); EUDATePIDremoveForce($objPath)}
+# acPostProcForDelete { }
 ########### end SCn
 
 
@@ -530,7 +515,7 @@ acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceIte
 # See acPreProcForModifyAVUMetadata for which rule to implement and backward compatibility 
 
 
-############ PDU
+############ PDU - this is the hook used for the repopack
 #acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit) { }
 #acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit) { }
 #acPostProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceItemName,*TargetItemName) { }
