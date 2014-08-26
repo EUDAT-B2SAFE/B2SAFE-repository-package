@@ -6,15 +6,19 @@
 # rp_console parameters
 ############################################
 # File listing the DO to replicate
-tmpLocalIngestFileList = C:\\tmp\\RepoPackToReplicate\\DataObjectToReplicate.txt
+localIngestFileList = C:\\tmp\\command\\DataObjectToReplicate.txt
 # File storing information about ongoing replication
 replicationResultFile = C:\\tmp\\result\\OngoingReplicationResult.txt 
 # File listing the DO to delete
-tmpLocalDeleteFileList = C:\\tmp\\command\\DataObjectToDelete.txt
+localDeleteFileList = C:\\tmp\\command\\DataObjectToDelete.txt
+# File listing the DO to retrieve
+localRetrieveFileList = C:\\tmp\\command\\DataObjectToRetrieve.txt
 
 ############################################
 # B2SAFE parameters
 ############################################
+# Resource ID is the ID assigned to the storage resource in the EUDAT RCT tool for the dataset or project
+RESOURCE_ID = xxxxxxxxxxxxxxxx
 # B2SAFE_TRANS_PROTOCOL values limited to "irods" for now on
 B2SAFE_TRANS_PROTOCOL irods 
 

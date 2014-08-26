@@ -87,13 +87,16 @@ public class DataSet {
     /**
      * To remove
      */
-	public void testConnection() {
-		log.info("Begin method DataSet.TestConnection");
+	public String testConnection() {
+		if (replicationService.isInitialized()) {
+			return "Already connected to B2SAFE ";
+		}
+		else {
 		if (this.initB2safeConnection())
-			log.info("Successful connection to B2SAFE ");
+			return "Successful connection to B2SAFE ";
 		else
-			log.info("Error connecting to B2SAFE ");
-		log.debug("End method DataSet.TestConnection");
+			return "Error connecting to B2SAFE ";
+		}
 	}
 	
 	/**
@@ -115,6 +118,7 @@ public class DataSet {
 				metadataInit = new HashMap<String, String>();
 				// TODO we need to sync up metadata name with the one expected by ingestion rule. So far it is EUDAT_ROR
 				metadataInit.put("ROR", doToReplicate.getRor());
+				metadataInit.put("resource_id", prop.getProperty("RESOURCE_ID"));
 
 				// Launch replication
 				log.info("Launch replication of " + doToReplicate.getLocalFilePath() + " to target collection " + doToReplicate.getRemoteDirPath());
@@ -163,6 +167,36 @@ public class DataSet {
 		return replicaResult;
 	}
 
+	/**
+	 * Retrieve a data object (ie a file) from B2SAFE and store it in the repository
+	 * 
+	 * @param dataObject
+	 * 		Description of the data object to retrieve, full path on B2SAFE must be provided
+	 */
+	public void retrieveOneDOByPath (DataObject dataObject){
+		try {
+			String remoteFileAbsolutePath = prop.getProperty("HOME_DIRECTORY") + dataObject.getRemoteDirPath()+dataObject.getFileName();
+			// Launch deletion
+			log.info("Retrieve " + remoteFileAbsolutePath + " TO " + dataObject.getLocalFilePath());
+			replicationService.retrieveFile(remoteFileAbsolutePath, dataObject.getLocalFilePath());
+		} catch (JargonException ex) {
+			log.error(ex.getMessage());
+		}				
+	}
+	
+	/**
+	 * Retrieve a list of data object from B2SAFE and store them in the repository
+	 * 
+	 * @param listDOToRetrieve
+	 * 		List of data objects to retrieve
+	 */
+	public void retrieveListOfDOByPath(ArrayList<DataObject> listDOToRetrieve) {
+
+		for (DataObject dataObject : listDOToRetrieve) {
+			retrieveOneDOByPath(dataObject);
+		}
+	}
+	
 	/**
 	 * FOR TEST PURPOSE ONLY
 	 * This method deletes a data object (ie a file) in EUDAT B2SAFE

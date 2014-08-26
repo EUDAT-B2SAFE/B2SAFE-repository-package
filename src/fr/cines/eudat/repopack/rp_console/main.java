@@ -19,8 +19,7 @@ public class main {
     public static Properties prop=null;
     private static InputStream input =null;
     protected static Logger log=null;
-
-
+    private static Scanner scanner = new Scanner (System.in);
 
 	public static void main(String[] args) throws IOException {
 		
@@ -54,18 +53,17 @@ public class main {
 	
 	private static boolean interactiveMenu() throws IOException {
 	    int swValue;
-	    Scanner scanner = new Scanner (System.in);
 
 	    // Display menu graphics
 	    System.out.println("=========================================================");
 	    System.out.println("|   MENU SELECTION DEMO                                 |");
 	    System.out.println("=========================================================");
 	    System.out.println("| Options:                                              |");
-	    System.out.println("|        1. Init Connection to B2SAFE                   |");
+	    System.out.println("|        1. Test Connection to B2SAFE                   |");
 	    System.out.println("|        2. Replicate based on ToReplicate file         |");
-	    System.out.println("|        3. Delete based on ToReplicate file (TEST)     |");
-	    System.out.println("|        4. Test DO to string                           |");
-	    System.out.println("|        5.                                             |");
+	    System.out.println("|        3. Delete based on ToDelete file (TEST ONLY)   |");
+	    System.out.println("|        4. Retrieve files based on ToRetrieve file     |");
+	    System.out.println("|        9. Test handling of DO file                    |");
 	    System.out.println("|        0. Exit                                        |");
 	    System.out.println("=========================================================");
 	    System.out.println("Enter your choice : ");
@@ -74,7 +72,7 @@ public class main {
 	    // Switch construct
 	    switch (swValue) {
 	    case 1:
-	    	dataSet.testConnection();
+	    	System.out.println(dataSet.testConnection());
 	    	break;
 	    case 2:
 	    	fileBasedInterface.initToReplicateDOList();
@@ -85,11 +83,13 @@ public class main {
 	    	if (dataSet.initB2safeConnection()) dataSet.deleteAllRequestedDO(fileBasedInterface.initToDeleteDOList());
 	    	break;
 	    case 4:
+	    	if (dataSet.initB2safeConnection()) dataSet.retrieveListOfDOByPath(fileBasedInterface.initToRetrieveDOList());
+	    	break;
+	    case 9:
 			for (DataObject dataObject : fileBasedInterface.initToReplicateDOList()) {
 				dataObject.toString();
 			}
-	    	break;
-	    case 5:
+			fileBasedInterface.writeReplicaResultToFile(fileBasedInterface.initToReplicateDOList());
 	    	break;
 	    case 0:
 	    	System.out.println("Exit selected");

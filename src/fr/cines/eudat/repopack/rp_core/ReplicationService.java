@@ -162,7 +162,8 @@ class ReplicationService {
 		}
 	}
 	
-	protected void retriveFile(String remoteFileName, String localFileName) throws JargonException {
+	// SCN fix typo in the method name
+	protected void retrieveFile(String remoteFileName, String localFileName) throws JargonException {
 		if(overrideJargonProperties!=null) {
 			irodsFileSystem.getIrodsSession().setJargonProperties(overrideJargonProperties);
 		}		

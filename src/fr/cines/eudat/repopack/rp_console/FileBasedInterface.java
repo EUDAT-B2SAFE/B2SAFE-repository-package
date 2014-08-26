@@ -16,78 +16,6 @@ import fr.cines.eudat.repopack.rp_core.DataSet;
 
 class FileBasedInterface {
 
-	protected ArrayList<DataObject> initToReplicateDOList(){
-		BufferedReader reader=null;
-		File ingestFile=null;
-		ArrayList<DataObject> toReplicateDOList = new ArrayList<DataObject>();
-
-		// Get file name from the properties
-		String toReplicateDataObjectsFilePath = main.prop.getProperty("tmpLocalIngestFileList");
-		try {
-			//Read Dataobject to replicate in DataObjectToReplicate.txt file
-			ingestFile = new File(toReplicateDataObjectsFilePath);
-
-			//Verify if DataObjectToReplicate.txt file exists. 
-			if(ingestFile.exists())
-			{
-				reader = new BufferedReader(new FileReader(ingestFile));
-			}
-
-			String line;
-			DataObject dataObject;
-			if(reader!= null) 
-			{    while ((line=reader.readLine())!=null)
-			{
-				//We split each lines from DataObjectToReplicate.txt file to  an array of String 
-				String tab[]=line.split(";");
-
-				if(tab.length>0)
-				{
-					dataObject = new DataObject();
-					dataObject.setFileName(tab[0]);
-					dataObject.setLocalFilePath(tab[1]);
-					if(tab.length>=2 && !tab[2].equals(""))
-					{
-						dataObject.setRemoteDirPath(tab[2]);
-					}
-					if(tab.length>=3 && !tab[3].equals(""))
-					{
-						dataObject.setRor(tab[3]);
-						dataObject.addOneEudatMetadata(new AVUMetaData("ROR",tab[3]));
-					}
-
-					toReplicateDOList.add(dataObject);           
-					// For dev only
-					System.out.println(dataObject.toString());
-				}   
-			}
-
-			//Deleting DataObjectToReplicate.txt file after reading it.
-			// TODO remove comment for full testing and production
-			// ingestFile.delete();
-			}
-
-		} catch (FileNotFoundException ex) {
-			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (IOException ex) {
-			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
-		}
-		finally
-		{
-
-			try 
-			{
-				//Close the stream of file
-				if (reader!= null) reader.close();
-
-			} 
-			catch (IOException ex) 
-			{
-				java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
-			}
-		}
-		return toReplicateDOList;
-	}
 	
 	protected void writeReplicaResultToFile (ArrayList<DataObject> replicaResult) {
 
@@ -98,20 +26,21 @@ class FileBasedInterface {
 		try {	 
 			File file = new File(main.prop.getProperty("replicationResultFile"));
  
-			// if file doesnt exists, then create it
+			// if file doesn't exist, then create it
 			if (!file.exists()) {
 				file.createNewFile();
-			}
- 
+			} 
 			fw = new FileWriter(file.getAbsoluteFile());
 			bw = new BufferedWriter(fw);
+			// Write header
+			bw.write("fileName;localFilePath;remoteDirPath;ror;eudatPid;replicaLaunchDate;replicaEndDate;adminStatus;");
+			bw.newLine();
+			// write one line per data object
 			for (DataObject dataObject : replicaResult) {
-				//bw.write(dataObject.toString());
 				bw.write(dataObject.toTextFileOutput());
 				bw.newLine();
 			}
 			bw.close();
-
 		} catch (FileNotFoundException ex) {
 			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (IOException ex) {
@@ -124,7 +53,6 @@ class FileBasedInterface {
 			{
 				//Close the stream of file
 				if (bw!= null) bw.close();
-
 			} 
 			catch (IOException ex) 
 			{
@@ -133,50 +61,79 @@ class FileBasedInterface {
 		}
 	}
 
+	protected ArrayList<DataObject> initToReplicateDOList(){
+		return textFileToListDO(main.prop.getProperty("localIngestFileList"));
+	}
+	
 	protected ArrayList<DataObject> initToDeleteDOList(){
+		return textFileToListDO(main.prop.getProperty("localDeleteFileList"));
+	}
+	
+	protected ArrayList<DataObject> initToRetrieveDOList(){
+		return textFileToListDO(main.prop.getProperty("localRetrieveFileList"));
+	}
+	
+	private ArrayList<DataObject> textFileToListDO(String textFilePath){ 
 		BufferedReader reader=null;
-		File toDeleteFile=null;
-		ArrayList<DataObject> toDeleteDOList = new ArrayList<DataObject>();
+		File toReadTextFile=null;
+		boolean headerLine = true; // used to jump over the header line
+		ArrayList<DataObject> resultDOList = new ArrayList<DataObject>();
 
-		// Get file name from the properties
-		String toDeleteDataObjectsFilePath = main.prop.getProperty("tmpLocalDeleteFileList");
 		try {
 			//Read Dataobject in file
-			toDeleteFile = new File(toDeleteDataObjectsFilePath);
+			toReadTextFile = new File(textFilePath);
 
-			//Verify if DataObjectToReplicate.txt file exists. 
-			if(toDeleteFile.exists())
+			//Verify if file exists. 
+			if(toReadTextFile.exists())
 			{
-				reader = new BufferedReader(new FileReader(toDeleteFile));
-
+				reader = new BufferedReader(new FileReader(toReadTextFile));
 			}
 
 			String line;
 			DataObject dataObject;
 			if(reader!= null) 
-			{    while ((line=reader.readLine())!=null)
-			{
-				//We split each lines from DataObjectToReplicate.txt file to  an array of String 
-				String tab[]=line.split(";");
-
-				if(tab.length>0)
+			{    
+				while ((line=reader.readLine())!=null)
 				{
-					dataObject = new DataObject();
-					dataObject.setFileName(tab[0]);
-					dataObject.setRemoteDirPath(tab[1]);
+					//We split each lines from text file to  an array of String 
+					String tab[]=line.split(";");
+					// Jumps over the header line
+					if (headerLine) {
+						headerLine = false;
+					}
+					else {
+						// If the line is not empty, set data object values from the fields
+						if (tab.length>0)
+						{
+							dataObject = new DataObject();
+							dataObject.setFileName(tab[0]);
+							if(tab.length>=1 && !tab[1].equals(""))
+							{
+								dataObject.setLocalFilePath(tab[1]);
+							}
+							if(tab.length>=2 && !tab[2].equals(""))
+							{
+								if ( !tab[2].endsWith("/") ) tab[2] += "/";
+								dataObject.setRemoteDirPath(tab[2]);
+							}
+							if(tab.length>3)
+							{
+								dataObject.setRor(tab[3]);
+								//dataObject.addOneEudatMetadata(new AVUMetaData("ROR",tab[3]));
+							}
+							if(tab.length>4)
+							{
+								dataObject.setEudatPid(tab[4]);
+							}
+							resultDOList.add(dataObject);           
+						}
+					}
+				}
 
-					toDeleteDOList.add(dataObject);           
-					// For dev only
-					System.out.println(dataObject.toString());
-				}   
+				//Deleting text file after reading it.
+				// TODO remove comment for full testing and production
+				// ingestFile.delete();	
 			}
-
-			//Deleting text file after reading it.
-			// TODO remove comment for full testing and production
-			// ingestFile.delete();
-			
-			}
-
 		} catch (FileNotFoundException ex) {
 			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (IOException ex) {
@@ -184,7 +141,6 @@ class FileBasedInterface {
 		}
 		finally
 		{
-
 			try 
 			{
 				//Close the stream of file
@@ -195,7 +151,6 @@ class FileBasedInterface {
 				java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
-		return toDeleteDOList;
+		return resultDOList;
 	}
-
 }
