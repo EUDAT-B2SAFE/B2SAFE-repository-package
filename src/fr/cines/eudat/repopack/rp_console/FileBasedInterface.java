@@ -107,22 +107,21 @@ class FileBasedInterface {
 						{
 							dataObject = new DataObject();
 							dataObject.setFileName(tab[0]);
-							if(tab.length>=1 && !tab[1].equals(""))
-							{
+							if(tab.length>=1 && !tab[1].equals("")) {
 								dataObject.setLocalFilePath(tab[1]);
 							}
-							if(tab.length>=2 && !tab[2].equals(""))
-							{
+							if(tab.length>=2 && !tab[2].equals("")) {
 								if ( !tab[2].endsWith("/") ) tab[2] += "/";
 								dataObject.setRemoteDirPath(tab[2]);
 							}
-							if(tab.length>3)
-							{
+							if(tab.length>3) {
 								dataObject.setRor(tab[3]);
 								//dataObject.addOneEudatMetadata(new AVUMetaData("ROR",tab[3]));
 							}
-							if(tab.length>4)
-							{
+							else {
+								dataObject.setRor("None");
+							}
+							if(tab.length>4) {
 								dataObject.setEudatPid(tab[4]);
 							}
 							resultDOList.add(dataObject);           

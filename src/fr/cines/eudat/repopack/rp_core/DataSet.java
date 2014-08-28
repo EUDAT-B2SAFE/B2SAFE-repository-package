@@ -117,7 +117,8 @@ public class DataSet {
 				// fill the metadata values in the map
 				metadataInit = new HashMap<String, String>();
 				// TODO we need to sync up metadata name with the one expected by ingestion rule. So far it is EUDAT_ROR
-				metadataInit.put("ROR", doToReplicate.getRor());
+				// ROR is forced to None if it has no value.
+				metadataInit.put("EUDAT/ROR", ( doToReplicate.getRor() != null) ? doToReplicate.getRor() : "None");
 				metadataInit.put("resource_id", prop.getProperty("RESOURCE_ID"));
 
 				// Launch replication
@@ -125,7 +126,12 @@ public class DataSet {
 				//get current date time with Date()
 				Date date = new Date();
 				doToReplicate.setReplicaLaunchDate(dateFormat.format(date));
+				// Launch replication
 				replicationService.replicate(doToReplicate.getLocalFilePath(), doToReplicate.getRemoteDirPath(), metadataInit);
+				// triggers the archive (currently setting ADMIN_Status = "ReadyToArchive")
+				metadataInit.clear();
+				metadataInit.put("ADMIN_Status", "ReadyToArchive");
+				replicationService.modifyMetadataToDataObject(prop.getProperty("HOME_DIRECTORY") + doToReplicate.getRemoteDirPath() + doToReplicate.getFileName(), metadataInit);
 
 				// Get feedback
 				replicaResult = doToReplicate;

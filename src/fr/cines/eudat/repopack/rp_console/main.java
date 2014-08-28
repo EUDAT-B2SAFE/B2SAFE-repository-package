@@ -56,7 +56,9 @@ public class main {
 
 	    // Display menu graphics
 	    System.out.println("=========================================================");
-	    System.out.println("|   MENU SELECTION DEMO                                 |");
+	    System.out.println("|   EUDAT repository packages                           |");
+	    System.out.println("|       Console based application                       |");
+	    System.out.println("|       Version date 28/08/2014                         |");
 	    System.out.println("=========================================================");
 	    System.out.println("| Options:                                              |");
 	    System.out.println("|        1. Test Connection to B2SAFE                   |");

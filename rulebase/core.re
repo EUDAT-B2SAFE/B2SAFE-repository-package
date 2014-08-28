@@ -520,12 +520,22 @@ acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceIte
 #acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit) { }
 #acPostProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceItemName,*TargetItemName) { }
 
-
 acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
 {
-	logInfo( "PDU Modify Meta");
-	checkMeta(*ItemName,*AName,*AValue)
+	on(*Option != "mod"){
+		logInfo( "PDU Add/Delete Meta *Option,*ItemType,*ItemName,*AName,*AValue,*AUnit");
+		checkMeta(*ItemName,*AName,*AValue)
+	}
 }
+
+acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit)
+{
+	on(*Option == "mod"){
+		logInfo( "PDU Modify Meta *Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit");
+		checkMeta(*ItemName,*NAName,*NAValue)
+	}
+}
+
 
 ##############
 

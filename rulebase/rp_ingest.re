@@ -21,7 +21,7 @@
 # checkMeta(*source,*AName,*AValue)
 # getMeta( *source, *AName , *AValue )
 # countMetaKeys( *source , *AName , *AValue )
-# checkChecksum( *source )
+# ingestObject( *source )
 # transferInitiated( *source )
 # transferFinished( *source )
 # changeValueinICAT(*source, *key , *newval )
@@ -70,23 +70,9 @@ EUDATePIDremoveForce(*path) {
 #-----------------------------------------------------------------------------
 checkMeta(*source,*AName,*AValue)
 {
-
-	assign ( *email_optional , "yes" );
-	assign ( *res0           , "0"   );
-	countMetaKeys( *source , "ROR"      , *nb_res1	);
-	countMetaKeys( *source , "OTHER_AckEmail" , *nb_res2	);
-        countMetaKeys( *source , "OTHER_original_checksum" , *nb_res3   );
-	getMeta(       *source , "ADMIN_Status"  , *res0   );
-
-	logInfo("checkMeta -> Check metadata in iCAT for (*source): *res0 , *nb_res1 , *nb_res2 , *nb_res3");
-
-	if ( *res0 == "TransferFinished" )
+	if ((*AName == "n:ADMIN_Status") && ( *AValue == "v:ReadyToArchive"))
 	{
-
-		if( (*nb_res1 > "0") && (*nb_res3 > "0") )
-		{
-			checkChecksum(*source);
-		}
+		ingestObject(*source);
 	}
 }
 
@@ -135,37 +121,49 @@ countMetaKeys( *source , *AName , *AValue )
 
 
 #-----------------------------------------------------------------------------
-# Compare checksum for every new object
+# Manage the ingestion in B2SAFE
+#	Check the checksum
+#	Create PID
 #
 # Parameters:
 #       *source  [IN]    target object to assign a PID
 #
-# Author: Pascal Dugénie, CINES
-#         Stephane Coutin (CINES) 25/8/2014 - Use EUDAT Core function for PID creation EUDATeiPIDeiChecksumMgmt
+# Author: Stephane Coutin (CINES) 
 #-----------------------------------------------------------------------------
 
-checkChecksum( *source )
+ingestObject( *source )
 {
 
-	logInfo("checkChecksum -> Check for (*source)");
+	logInfo("ingestObject-> Check for (*source)");
 	msiDataObjChksum(*source, "null", *checksum);
 
 	getMeta(       *source , "OTHER_original_checksum"  , *orig_checksum   );
 
 	if ( *checksum == *orig_checksum )
 	{
-		logInfo("checkChecksum -> Checksum is same as original = *checksum");
+		logInfo("ingestObject-> Checksum is same as original = *checksum");
         	changeValueinICAT(*source, "ADMIN_Status" , "Checksum_ok" ) ;
-                EUDATeiPIDeiChecksumMgmt(*source,"empty","false",bool("true"),0);
-        	changeValueinICAT(*source, "ADMIN_Status" , "Archive_ok" ) ;
+
+		# Extract the ROR value from iCat
+		getMeta( *source, "EUDAT/ROR" , *RorValue )	
+
+ 		EUDATCreatePID("None", *source, *RorValue, bool("true"), *PID);
+		# test PID creation
+		if((*PID == "empty") || (*PID == "None")) {
+			logInfo("ingestObject-> ERROR while creating the PID for *source PID = *PID");
+			changeValueinICAT(*source, "ADMIN_Status" , "ErrorPID" ) ;
+		}
+		else {
+			logInfo("ingestObject-> PID created for *source PID = [*PID] ROR = [*RorValue]");
+	        	changeValueinICAT(*source, "ADMIN_Status" , "Archive_ok" ) ;
+		}
 	}
 	else
 	{
-		logInfo("checkChecksum -> Checksum (*checksum) is different than original (*orig_checksum)");
+		logInfo("ingestObject-> Checksum (*checksum) is different than original (*orig_checksum)");
 		changeValueinICAT(*source, "ADMIN_Status" , "ErrorChecksum" ) ;
 	}
         changeValueinICAT(*source, "INFO_Checksum" , *checksum ); 
-
 }
 
 
