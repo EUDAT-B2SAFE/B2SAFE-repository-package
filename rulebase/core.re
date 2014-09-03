@@ -291,7 +291,7 @@ acSetMultiReplPerResc { }
 
 ########### PDU
 
-acPostProcForPut { logInfo( "PDU end of put"); transferFinished( $objPath ) }
+acPostProcForPut { logInfo( "PDU end of put"); rp_transferFinished( $objPath ) }
 
 
 ################
@@ -349,7 +349,7 @@ acDataDeletePolicy { }
 
 ########### SCn in order to delete the handle when deleting a file
 
-acPostProcForDelete { logInfo( "PDU PostDelete"); EUDATePIDremoveForce($objPath)}
+acPostProcForDelete { logInfo( "PDU PostDelete"); rp_EUDATePIDremoveForce($objPath)}
 # acPostProcForDelete { }
 ########### end SCn
 
@@ -515,6 +515,17 @@ acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceIte
 # See acPreProcForModifyAVUMetadata for which rule to implement and backward compatibility 
 
 
+############ PDU - this is the hook used for backward compatibility for CUNI
+
+acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit){
+	on( *ItemName like "/CINESZone/home/repopack/scratch/*" ) {
+		logInfo( "PDU Modify Meta CUNI compatibility *ItemName,*AName,*AValue ");
+		checkMeta(*ItemName,*AName,*AValue)
+	}
+}
+
+##############
+
 ############ PDU - this is the hook used for the repopack
 #acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit) { }
 #acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit) { }
@@ -524,7 +535,7 @@ acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit
 {
 	on(*Option != "mod"){
 		logInfo( "PDU Add/Delete Meta *Option,*ItemType,*ItemName,*AName,*AValue,*AUnit");
-		checkMeta(*ItemName,*AName,*AValue)
+		rp_checkMeta(*ItemName,*AName,*AValue)
 	}
 }
 
@@ -532,7 +543,7 @@ acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit
 {
 	on(*Option == "mod"){
 		logInfo( "PDU Modify Meta *Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit");
-		checkMeta(*ItemName,*NAName,*NAValue)
+		rp_checkMeta(*ItemName,*NAName,*NAValue)
 	}
 }
 

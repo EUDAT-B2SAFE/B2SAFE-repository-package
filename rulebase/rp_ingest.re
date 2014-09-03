@@ -17,14 +17,14 @@
 
 # List of the functions:
 # ----------------------
-# EUDATePIDremoveForce(*path)
-# checkMeta(*source,*AName,*AValue)
-# getMeta( *source, *AName , *AValue )
-# countMetaKeys( *source , *AName , *AValue )
-# ingestObject( *source )
-# transferInitiated( *source )
-# transferFinished( *source )
-# changeValueinICAT(*source, *key , *newval )
+# rp_EUDATePIDremoveForce(*path)
+# rp_checkMeta(*source,*AName,*AValue)
+# rp_getMeta( *source, *AName , *AValue )
+# rp_countMetaKeys( *source , *AName , *AValue )
+# rp_ingestObject( *source )
+# rp_transferInitiated( *source )
+# rp_transferFinished( *source )
+# rp_changeValueinICAT(*source, *key , *newval )
 
 #
 # This function remove an ePID... even if its 10320/loc field is not empty!
@@ -35,7 +35,7 @@
 #
 # Author: S Coutin (CINES) based on code from Giacomo Mariani, CINECA - 
 #
-EUDATePIDremoveForce(*path) {
+rp_EUDATePIDremoveForce(*path) {
     getEpicApiParameters(*credStoreType, *credStorePath, *epicApi, *serverID, *epicDebug) 
     logInfo("EUDATePIDremove -> Removing PID associated to: $userNameClient, $objPath ($filePath)");
 
@@ -58,7 +58,7 @@ EUDATePIDremoveForce(*path) {
 
 
 #-----------------------------------------------------------------------------
-# Check if ROR and email address have been inserted in ICAT by the user
+# Check if the ADMIN_Status value is set to Ready ToArchive and then kicks off ingestion
 #
 # Parameters:
 #       *source  [IN]    target object
@@ -68,11 +68,11 @@ EUDATePIDremoveForce(*path) {
 # Author: Pascal Dugénie, CINES
 # updated : Stéphane Coutin (CINES) - 26/8/14 (Use ROR instead of EUDAT_ROR as attribute name)
 #-----------------------------------------------------------------------------
-checkMeta(*source,*AName,*AValue)
+rp_checkMeta(*source,*AName,*AValue)
 {
 	if ((*AName == "n:ADMIN_Status") && ( *AValue == "v:ReadyToArchive"))
 	{
-		ingestObject(*source);
+		rp_ingestObject(*source);
 	}
 }
 
@@ -87,7 +87,7 @@ checkMeta(*source,*AName,*AValue)
 #
 # Author: Pascal Dugénie, CINES
 #-----------------------------------------------------------------------------
-getMeta( *source, *AName , *AValue )
+rp_getMeta( *source, *AName , *AValue )
 {
    	msiSplitPath(*source,*parent,*child);
 	msiExecStrCondQuery( "SELECT META_DATA_ATTR_VALUE WHERE META_DATA_ATTR_NAME = '*AName' AND COLL_NAME = '*parent' AND DATA_NAME = '*child'" , *B );
@@ -108,7 +108,7 @@ getMeta( *source, *AName , *AValue )
 #
 # Author: Pascal Dugénie, CINES
 #-----------------------------------------------------------------------------
-countMetaKeys( *source , *AName , *AValue )
+rp_countMetaKeys( *source , *AName , *AValue )
 {
 	msiSplitPath(*source, *parent , *child );
 	msiExecStrCondQuery( "SELECT count(META_DATA_ATTR_VALUE) WHERE META_DATA_ATTR_NAME = '*AName' AND COLL_NAME = '*parent' AND DATA_NAME = '*child'" , *B );
@@ -131,41 +131,354 @@ countMetaKeys( *source , *AName , *AValue )
 # Author: Stephane Coutin (CINES) 
 #-----------------------------------------------------------------------------
 
-ingestObject( *source )
+rp_ingestObject( *source )
 {
 
 	logInfo("ingestObject-> Check for (*source)");
+	msiDataObjChksum(*source, "null", *checksum);
+
+	rp_getMeta(       *source , "OTHER_original_checksum"  , *orig_checksum   );
+
+	if ( *checksum == *orig_checksum )
+	{
+		logInfo("ingestObject-> Checksum is same as original = *checksum");
+        	rp_changeValueinICAT(*source, "ADMIN_Status" , "Checksum_ok" ) ;
+
+		# Extract the ROR value from iCat
+		rp_getMeta( *source, "EUDAT/ROR" , *RorValue )	
+
+ 		EUDATCreatePID("None", *source, *RorValue, bool("true"), *PID);
+		# test PID creation
+		if((*PID == "empty") || (*PID == "None")) {
+			logInfo("ingestObject-> ERROR while creating the PID for *source PID = *PID");
+			rp_changeValueinICAT(*source, "ADMIN_Status" , "ErrorPID" ) ;
+		}
+		else {
+			logInfo("ingestObject-> PID created for *source PID = [*PID] ROR = [*RorValue]");
+	        	rp_changeValueinICAT(*source, "ADMIN_Status" , "Archive_ok" ) ;
+		}
+	}
+	else
+	{
+		logInfo("ingestObject-> Checksum (*checksum) is different than original (*orig_checksum)");
+		rp_changeValueinICAT(*source, "ADMIN_Status" , "ErrorChecksum" ) ;
+	}
+        rp_changeValueinICAT(*source, "INFO_Checksum" , *checksum ); 
+}
+
+
+
+#-----------------------------------------------------------------------------
+# Process executed when a transfer has been initiated
+# (this process is triggered by the iputPreProc hook)
+#
+# Parameters:
+#       *source  [IN]    target object to assign a new value
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+
+rp_transferInitiated( *source )
+{
+
+        rp_changeValueinICAT(*source, "ADMIN_Status" , "TransferStarted" ) ;
+
+	msiGetSystemTime( *TimeNow, "human" );
+
+        rp_changeValueinICAT(*source, "INFO_TimeOfStart", *TimeNow ) ;
+
+}
+
+
+
+#-----------------------------------------------------------------------------
+# Process executed after a transfer is finished
+# (this process is triggered by the iputPostProc hook)
+#
+# Parameters:
+#       *source  [IN]    target object to assign a new value
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+
+rp_transferFinished( *source )
+{
+
+	rp_changeValueinICAT(*source, "ADMIN_Status" , "TransferFinished" ) ;
+	msiGetSystemTime( *TimeNow, "human" );
+	rp_changeValueinICAT(*source, "INFO_TimeOfTransfer" , *TimeNow ) ;
+}
+
+
+
+
+#-----------------------------------------------------------------------------
+# Change a value in iCAT
+#
+# Parameters:
+#       *source  [IN]    target object to assign a new value
+#       *key     [IN]    target key    to assign a new value
+#       *newval  [IN]    new value to be assigned
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+
+rp_changeValueinICAT(*source, *key , *newval )
+{
+	msiSplitPath(  *source , *parent 	, *child		);
+	msiGetObjType( *source , *objType					);
+	rp_countMetaKeys( *source , *key 		, *key_exist 	);
+	logInfo( "Set *key into *newval (key_exist=*key_exist)" );
+
+	if ( *key_exist != "0" ){
+		msiExecStrCondQuery( "SELECT META_DATA_ATTR_VALUE WHERE META_DATA_ATTR_NAME = '*key' AND COLL_NAME = '*parent' AND DATA_NAME = '*child'" , *B );
+
+		foreach   ( *B )    {
+			msiGetValByKey( *B , "META_DATA_ATTR_VALUE" , *val )	;
+		}
+
+		msiAddKeyVal(                   *mdkey  , *key    , *val      );
+		msiRemoveKeyValuePairsFromObj(  *mdkey  , *source , *objType  );
+	}
+	msiAddKeyVal(                   *mdkey  , *key    , *newval   );
+	msiAssociateKeyValuePairsToObj( *mdkey  , *source , *objType  );
+}
+
+
+
+###############################################################################################################################
+########## Below this line, the functions are left for backward compatibility
+###############################################################################################################################
+###
+###
+
+
+checkMeta_test(*source,*AName,*AValue)
+{
+
+
+logInfo( "PDU in checkmeta");
+
+
+}
+
+
+
+#-----------------------------------------------------------------------------
+# Check if ROR and email address have been inserted in ICAT by the user
+#
+# Parameters:
+#       *source  [IN]    target object
+#       *AName   [IN]    name of the MD that has been modified
+#       *AValue  [IN]    value of the MD that has been modified
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+checkMeta(*source,*AName,*AValue)
+{
+
+	assign ( *email_optional , "yes" );
+
+	assign ( *res0           , "0"   );
+
+	countMetaKeys( *source , "EUDAT_ROR"      , *nb_res1	);
+
+	countMetaKeys( *source , "OTHER_AckEmail" , *nb_res2	);
+
+        countMetaKeys( *source , "OTHER_original_checksum" , *nb_res3   );
+
+	getMeta(       *source , "ADMIN_Status"  , *res0   );
+
+	logInfo("Check metadata in iCAT for (*source): *res0 , *nb_res1 , *nb_res2 , *nb_res3");
+
+
+	if ( *res0 == "TransferFinished" )
+	{
+
+		if ( *email_optional == "yes" )
+		{
+
+	    		if( (*nb_res1 > "0") && (*nb_res3 > "0") )
+			{
+
+				checkChecksum(*source);
+#				insertPIDinICAT(*source);
+			}
+
+		}
+		else
+		{
+	    	  if( (*nb_res1 != "0") && (*nb_res2 != "0") && ( (*AName == "EUDAT_ROR" ) ||  (*AName == "OTHER_AckEmail") ) )
+		  {
+
+			checkChecksum( *source );
+#			insertPIDinICAT(*source);
+		  }
+		}
+	}
+
+
+
+#        if( (*nb_res1 != "0") && (*nb_res3 != "0") )
+#        {
+#
+#                insertPIDinICAT(*source);
+#        }
+
+
+
+}
+
+
+#-----------------------------------------------------------------------------
+# get values of metadata in ICAT
+#
+# Parameters:
+#       *source  [IN]    target object
+#       *AName   [IN]    name of the MD
+#       *AValue  [OUT]   value of the MD
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+getMeta( *source, *AName , *AValue )
+{
+
+   	msiSplitPath(*source,*parent,*child);
+
+	msiExecStrCondQuery( "SELECT META_DATA_ATTR_VALUE WHERE META_DATA_ATTR_NAME = '*AName' AND COLL_NAME = '*parent' AND DATA_NAME = '*child'" , *B );
+
+        foreach   ( *B )    {
+               	msiGetValByKey( *B , "META_DATA_ATTR_VALUE" , *AValue );
+        }
+
+}
+
+
+#-----------------------------------------------------------------------------
+# count metadata in ICAT
+#
+# Parameters:
+#       *source  [IN]    target object
+#       *AName   [IN]    name of the MD
+#       *AValue  [OUT]   value of the MD
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+countMetaKeys( *source , *AName , *AValue )
+{
+
+	msiSplitPath(*source, *parent , *child );
+
+	msiExecStrCondQuery( "SELECT count(META_DATA_ATTR_VALUE) WHERE META_DATA_ATTR_NAME = '*AName' AND COLL_NAME = '*parent' AND DATA_NAME = '*child'" , *B );
+
+	foreach   ( *B )    {
+		msiGetValByKey( *B , "META_DATA_ATTR_VALUE" , *AValue );
+		logInfo("########## Avalue= *AValue");
+	}
+
+}
+
+
+#-----------------------------------------------------------------------------
+# Compare checksum for every new object
+#
+# Parameters:
+#       *source  [IN]    target object to assign a PID
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+
+checkChecksum( *source )
+{
+
 	msiDataObjChksum(*source, "null", *checksum);
 
 	getMeta(       *source , "OTHER_original_checksum"  , *orig_checksum   );
 
 	if ( *checksum == *orig_checksum )
 	{
-		logInfo("ingestObject-> Checksum is same as original = *checksum");
-        	changeValueinICAT(*source, "ADMIN_Status" , "Checksum_ok" ) ;
 
-		# Extract the ROR value from iCat
-		getMeta( *source, "EUDAT/ROR" , *RorValue )	
-
- 		EUDATCreatePID("None", *source, *RorValue, bool("true"), *PID);
-		# test PID creation
-		if((*PID == "empty") || (*PID == "None")) {
-			logInfo("ingestObject-> ERROR while creating the PID for *source PID = *PID");
-			changeValueinICAT(*source, "ADMIN_Status" , "ErrorPID" ) ;
-		}
-		else {
-			logInfo("ingestObject-> PID created for *source PID = [*PID] ROR = [*RorValue]");
-	        	changeValueinICAT(*source, "ADMIN_Status" , "Archive_ok" ) ;
-		}
+		insertPIDinICAT(*source , *checksum);	
 	}
+
 	else
 	{
-		logInfo("ingestObject-> Checksum (*checksum) is different than original (*orig_checksum)");
 		changeValueinICAT(*source, "ADMIN_Status" , "ErrorChecksum" ) ;
 	}
-        changeValueinICAT(*source, "INFO_Checksum" , *checksum ); 
+
+       changeValueinICAT(*source, "INFO_Checksum" , *checksum );
+
 }
 
+
+
+
+
+
+#-----------------------------------------------------------------------------
+# Insert a PID record in ICAT for every new object
+#
+# Parameters:
+#       *source  [IN]    target object to assign a PID
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+
+insertPIDinICAT(*source , *checksum) {
+
+    logInfo("Insert PID in iCAT for (*source)");
+
+    getSharedCollection(*source,*collectionPath);
+    logInfo( "Get collection path: *collectionPath" );
+
+    getEpicApiParameters(*credStoreType, *credStorePath, *epicApi, *serverID, *epicDebug);
+    logInfo( "Credential info: *credStoreType, *credStorePath, *epicApi, *serverID, *epicDebug" );
+
+#	msiDataObjChksum(*source, "null", *checksum);
+
+
+    msiExecCmd("epicclient.py","*credStoreType *credStorePath create *serverID*source --checksum *checksum","null","null", "null", *out);
+
+#    msiExecCmd("epicclient.py","os /opt/iRODS/modules/EUDAT-PID/cmd/credentials_example test","null","null", "null", *out);
+
+#msiExecCmd("rndString",5,"null","null","null",*out);
+
+    msiGetStdoutInExecCmdOut(*out, *PIDresponse);
+    logInfo("PID response: *PIDresponse");
+
+    msiGetObjType( *source , *objType);
+
+   msiExecCmd("epicclient.py","*credStoreType *credStorePath modify *PIDresponse ROR *PIDresponse", "null", "null", "null", *out2);
+
+
+
+#    msiGetSystemTime(*TimeNow,"human");
+
+	# returns the size of a string
+#	msiStrlen(*source, *stringlen );
+
+
+#	assign( *ror , *stringlen );
+
+#	msiSubstr(*source, "15" , "8" , *ror );
+
+#	logInfo( "Calculate RoR *ror from object *source" );
+
+
+#    msiAddKeyVal( *TimeKey , "INFO_TimeOfTransfer"   , *TimeNow       );
+   msiAddKeyVal( *PIDkey  , "EUDAT_PID"           	, *PIDresponse   );
+
+
+#    msiAddKeyVal( *Chkkey  , "INFO_Checksum"       	, *checksum      );
+
+	changeValueinICAT(*source, "ADMIN_Status" , "Archive_ok" ) ;
+
+
+#    msiAssociateKeyValuePairsToObj(*TimeKey , *source , *objType );
+    msiAssociateKeyValuePairsToObj(*PIDkey  , *source , *objType );
+#    msiAssociateKeyValuePairsToObj(*Chkkey  , *source , *objType );
+
+}
 
 
 #-----------------------------------------------------------------------------
@@ -205,8 +518,11 @@ transferFinished( *source )
 {
 
 	changeValueinICAT(*source, "ADMIN_Status" , "TransferFinished" ) ;
+
 	msiGetSystemTime( *TimeNow, "human" );
+
 	changeValueinICAT(*source, "INFO_TimeOfTransfer" , *TimeNow ) ;
+
 }
 
 
@@ -225,12 +541,19 @@ transferFinished( *source )
 
 changeValueinICAT(*source, *key , *newval )
 {
+
 	msiSplitPath(  *source , *parent 	, *child		);
-	msiGetObjType( *source , *objType					);
+
+    msiGetObjType( *source , *objType					);
+
 	countMetaKeys( *source , *key 		, *key_exist 	);
+
+
 	logInfo( "Set *key into *newval (key_exist=*key_exist)" );
 
+
 	if ( *key_exist != "0" ){
+
 		msiExecStrCondQuery( "SELECT META_DATA_ATTR_VALUE WHERE META_DATA_ATTR_NAME = '*key' AND COLL_NAME = '*parent' AND DATA_NAME = '*child'" , *B );
 
 		foreach   ( *B )    {
@@ -240,8 +563,55 @@ changeValueinICAT(*source, *key , *newval )
 		msiAddKeyVal(                   *mdkey  , *key    , *val      );
 		msiRemoveKeyValuePairsFromObj(  *mdkey  , *source , *objType  );
 	}
+
+
+
 	msiAddKeyVal(                   *mdkey  , *key    , *newval   );
+
 	msiAssociateKeyValuePairsToObj( *mdkey  , *source , *objType  );
+
 }
+
+
+
+#-----------------------------------------------------------------------------
+# Insert a Status record in ICAT for every new object
+#
+# Parameters:
+#       *source  [IN]    target object
+#
+# Author: Pascal Dugénie, CINES
+#-----------------------------------------------------------------------------
+
+# This function is NOT USED anymore
+
+insertStatusinICAT(*source)
+{
+
+    logInfo("Modify ADMIN_Status for (*source)")									;
+
+    msiGetSystemTime( *TimeNow , "human" )											;
+
+
+	changeValueinICAT( *source, "INFO_TimeOfDataUpload" , *TimeNow               )	;
+
+	changeValueinICAT( *source, "ADMIN_Status"          , "Waiting for metadata" )	;
+
+
+
+}
+
+
+
+#-----------------------------------------------------------------------------
+#	msiSendMail( 'dugenie@cines.fr' , "subject" , "body" );
+#	msiExecCmd("mail.sh","null","null","null", "null", *out);
+
+#
+# once the data has been controlled, move it to another resource
+#  msiDataObjPhymv
+
+
+
 
 
