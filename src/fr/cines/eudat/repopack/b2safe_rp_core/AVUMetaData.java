@@ -1,4 +1,4 @@
-package fr.cines.eudat.repopack.rp_core;
+package fr.cines.eudat.repopack.b2safe_rp_core;
 
 /**
  * This class represents a metadata with an Attribute, Value, Unit format

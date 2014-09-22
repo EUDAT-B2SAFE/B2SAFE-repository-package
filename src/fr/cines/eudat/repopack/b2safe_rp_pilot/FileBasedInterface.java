@@ -1,4 +1,4 @@
-package fr.cines.eudat.repopack.rp_console;
+package fr.cines.eudat.repopack.b2safe_rp_pilot;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,37 +10,96 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
-import fr.cines.eudat.repopack.rp_core.AVUMetaData;
-import fr.cines.eudat.repopack.rp_core.DataObject;
-import fr.cines.eudat.repopack.rp_core.DataSet;
+import fr.cines.eudat.repopack.b2safe_rp_core.AVUMetaData;
+import fr.cines.eudat.repopack.b2safe_rp_core.DataObject;
+import fr.cines.eudat.repopack.b2safe_rp_core.DataSet;
 
+/**
+ * @author "S. Coutin (CINES)"
+ *
+ */
 class FileBasedInterface {
 
-	
-	protected void writeReplicaResultToFile (ArrayList<DataObject> replicaResult) {
+    /**
+     * Used to convert the data object to a string fitting with the rp_console output file format
+     * 
+     * @return
+     * 		The string representing the data object
+     */
+    private String toTextFileOutput(DataObject dataObject) {
+        StringBuilder sb= new StringBuilder();
+        sb.append(dataObject.getOperation() +";");
+        sb.append(dataObject.getStatus() +";");
+        sb.append(dataObject.getStatusMessage() +";");
+        sb.append(dataObject.getLaunchDate() + ";");
+        sb.append(dataObject.getEndDate() + ";");
+        sb.append(dataObject.getFileName() + ";");
+        sb.append(dataObject.getLocalFilePath() + ";");
+        sb.append(dataObject.getRemoteDirPath() + ";");
+        sb.append(dataObject.getRor() + ";");
+        sb.append(dataObject.getEudatPid() + ";");
+        return sb.toString();  	
+    }
+
+    
+    /**
+     * Used to convert the data object to a string fitting with the rp_console output file format
+     * 
+     * @return
+     * 		The string representing the data object
+     */
+	protected void writeOperationResultToFile (ArrayList<DataObject> replicaResult) {
 
 		FileWriter fw = null;
 		BufferedWriter bw = null;
+		boolean writeHeader = false;
+
+		FileWriter fwErr = null;
+		BufferedWriter bwErr = null;
+		boolean writeHeaderErr = false;
 
 		// Get file name from the properties
 		try {	 
-			File file = new File(main.prop.getProperty("replicationResultFile"));
+			File file = new File(B2safeRpPilot.prop.getProperty("replicationResultFile").trim());
+			File fileErr = new File(B2safeRpPilot.prop.getProperty("operationErrorResultFile").trim());
  
 			// if file doesn't exist, then create it
 			if (!file.exists()) {
 				file.createNewFile();
+				writeHeader = true;
 			} 
-			fw = new FileWriter(file.getAbsoluteFile());
+			// if file error doesn't exist, then create it
+			if (!fileErr.exists()) {
+				fileErr.createNewFile();
+				writeHeaderErr = true;
+			} 
+			
+			fw = new FileWriter(file.getAbsoluteFile(), true);
 			bw = new BufferedWriter(fw);
 			// Write header
-			bw.write("fileName;localFilePath;remoteDirPath;ror;eudatPid;replicaLaunchDate;replicaEndDate;adminStatus;");
-			bw.newLine();
-			// write one line per data object
-			for (DataObject dataObject : replicaResult) {
-				bw.write(dataObject.toTextFileOutput());
+			if (writeHeader) {
+				bw.write("Operation;Status;StatusMessage;LaunchDate;EndDate;FileName;LocalFilePath;remoteDirPath;ror;eudatPid;");
 				bw.newLine();
 			}
+			fwErr = new FileWriter(fileErr.getAbsoluteFile(), true);
+			bwErr = new BufferedWriter(fwErr);
+			// Write header
+			if (writeHeaderErr) {
+				bwErr.write("Operation;Status;StatusMessage;LaunchDate;EndDate;FileName;LocalFilePath;remoteDirPath;ror;eudatPid;");
+				bwErr.newLine();
+			}
+			// write one line per data object and one line in the error file if status is ERROR
+			for (DataObject dataObject : replicaResult) {
+				bw.write(toTextFileOutput(dataObject));
+				bw.newLine();
+				if (dataObject.getStatus().equals("ERROR")) {
+					bwErr.write(toTextFileOutput(dataObject));
+					bwErr.newLine();					
+				}
+			}
 			bw.close();
+			bwErr.close();
+			
 		} catch (FileNotFoundException ex) {
 			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (IOException ex) {
@@ -48,11 +107,11 @@ class FileBasedInterface {
 		}
 		finally
 		{
-
 			try 
 			{
 				//Close the stream of file
 				if (bw!= null) bw.close();
+				if (bwErr!= null) bw.close();
 			} 
 			catch (IOException ex) 
 			{
@@ -62,15 +121,15 @@ class FileBasedInterface {
 	}
 
 	protected ArrayList<DataObject> initToReplicateDOList(){
-		return textFileToListDO(main.prop.getProperty("localIngestFileList"));
+		return textFileToListDO(B2safeRpPilot.prop.getProperty("localIngestFileList").trim());
 	}
 	
 	protected ArrayList<DataObject> initToDeleteDOList(){
-		return textFileToListDO(main.prop.getProperty("localDeleteFileList"));
+		return textFileToListDO(B2safeRpPilot.prop.getProperty("localDeleteFileList").trim());
 	}
 	
 	protected ArrayList<DataObject> initToRetrieveDOList(){
-		return textFileToListDO(main.prop.getProperty("localRetrieveFileList"));
+		return textFileToListDO(B2safeRpPilot.prop.getProperty("localRetrieveFileList").trim());
 	}
 	
 	private ArrayList<DataObject> textFileToListDO(String textFilePath){ 

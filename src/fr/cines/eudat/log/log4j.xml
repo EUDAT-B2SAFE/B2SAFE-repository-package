@@ -8,7 +8,7 @@
       <param name="ConversionPattern" value="%m%n"/>
     </layout>
         <filter class="org.apache.log4j.varia.LevelRangeFilter">
-         <param name="levelMin" value="DEBUG"/>
+         <param name="levelMin" value="INFO"/>
       </filter>
  </appender>
 
@@ -68,17 +68,13 @@
    <appender-ref ref="file-error_isaac" />
 </logger>     
     
-<!--
-<logger name="org.irods.jargon" additivity="true">
-   <appender-ref ref="console"/>
-   <appender-ref ref="file-debug_isaac" />
-   <appender-ref ref="file-info_isaac" />
-   <appender-ref ref="file-warning_isaac" />
+
+<logger name="org.irods.jargon" additivity="false">
    <appender-ref ref="file-error_isaac" />
 </logger> 
 
 
-
+<!--
 <logger name="fr.cines.isaac" additivity="false">
    <appender-ref ref="console" />
 </logger> 

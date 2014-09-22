@@ -3,25 +3,28 @@
 # and open the template in the editor.
 
 ############################################
-# rp_console parameters
+# b2safe_rp_pilot parameters
 ############################################
+# Select the execution mode, values can be : console or batch
+PILOT_EXEC_MODE batch
 # File listing the DO to replicate
 localIngestFileList = C:\\tmp\\command\\DataObjectToReplicate.txt
-# File storing information about ongoing replication
-replicationResultFile = C:\\tmp\\result\\OngoingReplicationResult.txt 
 # File listing the DO to delete
 localDeleteFileList = C:\\tmp\\command\\DataObjectToDelete.txt
 # File listing the DO to retrieve
 localRetrieveFileList = C:\\tmp\\command\\DataObjectToRetrieve.txt
+# File storing information about ongoing replication
+replicationResultFile = C:\\tmp\\result\\OperationResult.txt
+# File storing the operations resulting in errors 
+operationErrorResultFile = C:\\tmp\\result\\OperationErrorResult.txt
 
 ############################################
 # B2SAFE parameters
 ############################################
 # Resource ID is the ID assigned to the storage resource in the EUDAT RCT tool for the dataset or project
-RESOURCE_ID = xxxxxxxxxxxxxxxx
+RESOURCE_ID = c681604c1fd0428d88dd9310bb8f2902
 # B2SAFE_TRANS_PROTOCOL values limited to "irods" for now on
 B2SAFE_TRANS_PROTOCOL irods 
-
 
 # Parameters for the iRods based file transfer. To be defined with EUDAT partner
 HOST = ariane-test.cines.fr

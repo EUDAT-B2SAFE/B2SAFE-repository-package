@@ -1,4 +1,4 @@
-package fr.cines.eudat.repopack.rp_core;
+package fr.cines.eudat.repopack.b2safe_rp_core;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +15,7 @@ import java.util.Map;
  *
  */
 public class DataObject {
+	private String operation; 
 	private String repositoryIdentifier;
 	private String fileName;
 	private String localFilePath;
@@ -22,11 +23,20 @@ public class DataObject {
 	private String checksum;
 	private String ror;
 	private String eudatPid;
-	private String replicaLaunchDate;
-	private String replicaEndDate;
-	private String adminStatus;
+	private String launchDate;
+	private String endDate;
+	private String status;
+	private String statusMessage;
 	private Map<String, AVUMetaData> eudatMetadata = new HashMap<String, AVUMetaData>();
 	
+    public String getOperation() {
+        return operation;
+    }
+
+    public void setOperation(String operation) {
+        this.operation = operation;
+    }
+
     public String getRepositoryIdentifier() {
         return repositoryIdentifier;
     }
@@ -75,28 +85,36 @@ public class DataObject {
         this.eudatPid = eudatPid;
     }
 
-    public String getReplicaLaunchDate() {
-        return replicaLaunchDate;
+    public String getLaunchDate() {
+        return launchDate;
     }
 
-    public void setReplicaLaunchDate(String replicaLaunchDate) {
-        this.replicaLaunchDate = replicaLaunchDate;
+    public void setLaunchDate(String replicaLaunchDate) {
+        this.launchDate = replicaLaunchDate;
     }
 
-    public String getReplicaSuccessDate() {
-        return replicaEndDate;
+    public String getEndDate() {
+        return endDate;
     }
 
-    public void setReplicaSuccessDate(String replicaSuccessDate) {
-        this.replicaEndDate = replicaSuccessDate;
+    public void setEndDate(String replicaSuccessDate) {
+        this.endDate = replicaSuccessDate;
     }
 
-    public String setAdminStatus() {
-        return adminStatus;
+    public String getStatus() {
+        return status;
     }
 
-    public void setAdminStatus(String error) {
-        this.adminStatus = error;
+    public void setStatus(String error) {
+        this.status = error;
+    }
+
+    public String getStatusMessage() {
+        return statusMessage;
+    }
+
+    public void setStatusMessage(String errorMsg) {
+        this.statusMessage = errorMsg;
     }
 
     public String getRemoteDirPath() {
@@ -116,26 +134,6 @@ public class DataObject {
     
     public void addOneEudatMetadata (AVUMetaData avu) {
     	this.eudatMetadata.put(avu.getAttribute(), avu);
-    }
-
-    /**
-     * Used to convert the data object to a string fitting with the rp_console output file format
-     * NOTE: this method will be removed from the rp_core
-     * 
-     * @return
-     * 		The string representing the data object
-     */
-    public String toTextFileOutput() {
-        StringBuilder sb= new StringBuilder();
-        sb.append(this.fileName + ";");
-        sb.append(this.localFilePath + ";");
-        sb.append(this.remoteDirPath + ";");
-        sb.append(this.ror + ";");
-        sb.append(this.eudatPid + ";");
-        sb.append(this.replicaLaunchDate + ";");
-        sb.append(this.replicaEndDate + ";");
-        sb.append(this.adminStatus +";");
-        return sb.toString();  	
     }
 
     
@@ -184,22 +182,22 @@ public class DataObject {
              sb.append(checksum);
         }
         
-        if(replicaLaunchDate!=null)
+        if(launchDate!=null)
         {
              sb.append(", Start date => ");
-             sb.append(replicaLaunchDate);
+             sb.append(launchDate);
         }
         
-        if(replicaEndDate!=null)
+        if(endDate!=null)
         {
              sb.append(", End date => ");
-             sb.append(replicaEndDate);
+             sb.append(endDate);
         }
         
-        if(adminStatus!=null)
+        if(status!=null)
         {
              sb.append(", adminStatus => ");
-             sb.append(adminStatus);
+             sb.append(status);
         }
         if (eudatMetadata!=null)
         {

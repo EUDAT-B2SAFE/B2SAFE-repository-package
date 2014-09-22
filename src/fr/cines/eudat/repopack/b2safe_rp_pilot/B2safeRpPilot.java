@@ -1,4 +1,4 @@
-package fr.cines.eudat.repopack.rp_console;
+package fr.cines.eudat.repopack.b2safe_rp_pilot;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,22 +9,44 @@ import java.util.Scanner;
 import org.apache.log4j.Logger;
 
 import fr.cines.eudat.log.Log;
-import fr.cines.eudat.repopack.rp_core.DataObject;
-import fr.cines.eudat.repopack.rp_core.DataSet;
+import fr.cines.eudat.repopack.b2safe_rp_core.*;
 
-public class main {
+public class B2safeRpPilot {
+	// constants
+	public static final String versionInfo = "v1.0.0 - 17/9/14";
+	
 	public static final boolean LOG_TRACE = false;
-	private static FileBasedInterface fileBasedInterface = new FileBasedInterface();
-	private static DataSet dataSet = new DataSet();
+    protected static Logger log=null;
+
     public static Properties prop=null;
     private static InputStream input =null;
-    protected static Logger log=null;
     private static Scanner scanner = new Scanner (System.in);
 
+    private static FileBasedInterface fileBasedInterface = new FileBasedInterface();
+	private static DataSet dataSet = new DataSet();
+
 	public static void main(String[] args) throws IOException {
-		
 		new Log();
         log= Log.getLogger(DataSet.class.getName());
+		
+		init();
+		if (prop.getProperty("PILOT_EXEC_MODE").equals("console")) {
+			// Launch menu
+			while (interactiveMenu());		
+		}
+		else {
+			if (prop.getProperty("PILOT_EXEC_MODE").equals("batch")) {
+				log.info("Launching batch mode with version : "+ versionInfo);
+				// The batch mode launches the Replication based on the available file
+		    	fileBasedInterface.initToReplicateDOList();
+		    	if (dataSet.initB2safeConnection()) 
+		    		fileBasedInterface.writeOperationResultToFile(dataSet.replicateAllRequestedDO(fileBasedInterface.initToReplicateDOList()));
+				log.info("Ending batch mode");				
+			}
+		}
+	}
+	
+	private static void init() {
         
 		// Load the properties from file
         prop= new Properties();		
@@ -46,9 +68,6 @@ public class main {
 			log.error(ex.getMessage());
 		}
 
-				
-		// Launch menu
-		while (interactiveMenu());
 	}
 	
 	private static boolean interactiveMenu() throws IOException {
@@ -58,7 +77,7 @@ public class main {
 	    System.out.println("=========================================================");
 	    System.out.println("|   EUDAT repository packages                           |");
 	    System.out.println("|       Console based application                       |");
-	    System.out.println("|       Version date 28/08/2014                         |");
+	    System.out.println("|       "+ versionInfo +"                         |");
 	    System.out.println("=========================================================");
 	    System.out.println("| Options:                                              |");
 	    System.out.println("|        1. Test Connection to B2SAFE                   |");
@@ -79,19 +98,21 @@ public class main {
 	    case 2:
 	    	fileBasedInterface.initToReplicateDOList();
 	    	if (dataSet.initB2safeConnection()) 
-	    		fileBasedInterface.writeReplicaResultToFile(dataSet.replicateAllRequestedDO(fileBasedInterface.initToReplicateDOList()));
+	    		fileBasedInterface.writeOperationResultToFile(dataSet.replicateAllRequestedDO(fileBasedInterface.initToReplicateDOList()));
 	    	break;
 	    case 3:
-	    	if (dataSet.initB2safeConnection()) dataSet.deleteAllRequestedDO(fileBasedInterface.initToDeleteDOList());
+	    	if (dataSet.initB2safeConnection()) 
+	    		fileBasedInterface.writeOperationResultToFile(dataSet.deleteAllRequestedDO(fileBasedInterface.initToDeleteDOList()));
 	    	break;
 	    case 4:
-	    	if (dataSet.initB2safeConnection()) dataSet.retrieveListOfDOByPath(fileBasedInterface.initToRetrieveDOList());
+	    	if (dataSet.initB2safeConnection()) 
+	    		fileBasedInterface.writeOperationResultToFile(dataSet.retrieveListOfDOByPath(fileBasedInterface.initToRetrieveDOList()));
 	    	break;
 	    case 9:
 			for (DataObject dataObject : fileBasedInterface.initToReplicateDOList()) {
-				dataObject.toString();
+				System.out.println(dataObject.toString());
 			}
-			fileBasedInterface.writeReplicaResultToFile(fileBasedInterface.initToReplicateDOList());
+			// fileBasedInterface.writeReplicaResultToFile(fileBasedInterface.initToReplicateDOList());
 	    	break;
 	    case 0:
 	    	System.out.println("Exit selected");
