@@ -13,7 +13,7 @@ import fr.cines.eudat.repopack.b2safe_rp_core.*;
 
 public class B2safeRpPilot {
 	// constants
-	public static final String versionInfo = "v1.0.0 - 17/9/14";
+	public static final String versionInfo = "v1.0.1 - 30/9/2014";
 	
 	public static final boolean LOG_TRACE = false;
     protected static Logger log=null;
@@ -44,6 +44,7 @@ public class B2safeRpPilot {
 				log.info("Ending batch mode");				
 			}
 		}
+		if (dataSet != null) dataSet.close();
 	}
 	
 	private static void init() {

@@ -18,7 +18,7 @@ import java.util.Properties;
  * @author Amir Kamran
  * 
  */
-public interface ReplicationService {
+abstract class ReplicationService {
 
 	/**
 	 * Initialize the ReplicationService with the provided configuration and try
@@ -29,14 +29,14 @@ public interface ReplicationService {
 	 * @return connection status
 	 * @throws ReplicationServiceException
 	 */
-	boolean initialize(Properties config) throws ReplicationServiceException;
+	abstract boolean initialize(Properties config) throws ReplicationServiceException;
 
 	/**
 	 * Returns whether the service is already initialized
 	 * 
 	 * @return true (initialized) or false (not initialized)
 	 */
-	boolean isInitialized();
+	abstract boolean isInitialized();
 
 	/**
 	 * Replicate a local resource (file or folder) to the replication server
@@ -45,7 +45,7 @@ public interface ReplicationService {
 	 *            absolute path of the local resource
 	 * @throws ReplicationServiceException
 	 */
-	void replicate(String localFileName) throws ReplicationServiceException;
+	abstract void replicate(String localFileName) throws ReplicationServiceException;
 
 	/**
 	 * Replicate a local resource (file or folder) to the replication server
@@ -56,7 +56,7 @@ public interface ReplicationService {
 	 *            key value pairs of metadata
 	 * @throws ReplicationServiceException
 	 */
-	void replicate(String localFileName, Map<String, String> metadata)
+	abstract void replicate(String localFileName, Map<String, String> metadata)
 			throws ReplicationServiceException;
 
 	/**
@@ -70,7 +70,7 @@ public interface ReplicationService {
 	 *            whether to overwrite if file already exists
 	 * @throws ReplicationServiceException
 	 */
-	void replicate(String localFileName, Map<String, String> metadata,
+	abstract void replicate(String localFileName, Map<String, String> metadata,
 			boolean force) throws ReplicationServiceException;
 
 	/**
@@ -85,7 +85,7 @@ public interface ReplicationService {
 	 *            key value pairs of metadata
 	 * @throws ReplicationServiceException
 	 */
-	void replicate(String localFileName, String remoteDirectory,
+	abstract void replicate(String localFileName, String remoteDirectory,
 			Map<String, String> metadata) throws ReplicationServiceException;
 
 	/**
@@ -102,7 +102,7 @@ public interface ReplicationService {
 	 *            whether to overwrite if file already exists
 	 * @throws ReplicationServiceException
 	 */
-	void replicate(String localFileName, String remoteDirectory,
+	abstract void replicate(String localFileName, String remoteDirectory,
 			Map<String, String> metadata, boolean force)
 			throws ReplicationServiceException;
 
@@ -114,7 +114,7 @@ public interface ReplicationService {
 	 * @return
 	 * @throws ReplicationServiceException
 	 */
-	boolean delete(String path) throws ReplicationServiceException;
+	abstract boolean delete(String path) throws ReplicationServiceException;
 
 	/**
 	 * Delete a resource from the replication server
@@ -126,7 +126,7 @@ public interface ReplicationService {
 	 * @return
 	 * @throws ReplicationServiceException
 	 */
-	public boolean delete(String path, boolean force)
+	abstract boolean delete(String path, boolean force)
 			throws ReplicationServiceException;
 
 	/**
@@ -139,7 +139,7 @@ public interface ReplicationService {
 	 *            absolute destination path
 	 * @throws ReplicationServiceException
 	 */
-	void retriveFile(String remoteFileName, String localFileName)
+	abstract void retrieveFile(String remoteFileName, String localFileName)
 			throws ReplicationServiceException;
 
 	/**
@@ -151,7 +151,7 @@ public interface ReplicationService {
 	 *            key value pairs of metadata
 	 * @throws ReplicationServiceException
 	 */
-	void addMetadataToDataObject(String filePath, Map<String, String> metadata)
+	abstract void addMetadataToDataObject(String filePath, Map<String, String> metadata)
 			throws ReplicationServiceException;
 
 	/**
@@ -163,7 +163,7 @@ public interface ReplicationService {
 	 *            key value pairs of metadata
 	 * @throws ReplicationServiceException
 	 */
-	void modifyMetadataToDataObject(String filePath,
+	abstract void modifyMetadataToDataObject(String filePath,
 			Map<String, String> metadata) throws ReplicationServiceException;
 
 	/**
@@ -175,7 +175,7 @@ public interface ReplicationService {
 	 *            key value paris of metadata
 	 * @throws ReplicationServiceException
 	 */
-	void addMetadataToCollection(String collecitonPath,
+	abstract void addMetadataToCollection(String collecitonPath,
 			Map<String, String> metadata) throws ReplicationServiceException;
 
 	/**
@@ -187,7 +187,7 @@ public interface ReplicationService {
 	 *            key value paris of metadata
 	 * @throws ReplicationServiceException
 	 */
-	void modifyMetadataToCollection(String collectionPath,
+	abstract void modifyMetadataToCollection(String collectionPath,
 			Map<String, String> metadata) throws ReplicationServiceException;
 
 	/**
@@ -195,7 +195,7 @@ public interface ReplicationService {
 	 * @return
 	 * @throws ReplicationServiceException
 	 */
-	Map<String, AVUMetaData> getMetadataOfDataObject(String dataObjectAbsolutePath)
+	abstract Map<String, AVUMetaData> getMetadataOfDataObject(String dataObjectAbsolutePath)
 			throws ReplicationServiceException;
 
 	/**
@@ -204,7 +204,7 @@ public interface ReplicationService {
 	 * @return
 	 * @throws ReplicationServiceException
 	 */
-	List<String> list() throws ReplicationServiceException;
+	abstract List<String> list() throws ReplicationServiceException;
 
 	/**
 	 * list resources stored on the default location
@@ -214,7 +214,7 @@ public interface ReplicationService {
 	 * @return
 	 * @throws ReplicationServiceException
 	 */
-	List<String> list(boolean returnAbsPath) throws ReplicationServiceException;
+	abstract List<String> list(boolean returnAbsPath) throws ReplicationServiceException;
 
 	/**
 	 * list resources stored on the specified location
@@ -226,7 +226,7 @@ public interface ReplicationService {
 	 * @return
 	 * @throws ReplicationServiceException
 	 */
-	List<String> list(String remoteDirectory, boolean returnAbsPath)
+	abstract List<String> list(String remoteDirectory, boolean returnAbsPath)
 			throws ReplicationServiceException;
 
 	/**
@@ -237,7 +237,7 @@ public interface ReplicationService {
 	 * @return
 	 * @throws ReplicationServiceException
 	 */
-	List<String> search(Map<String, String> metadata)
+	abstract List<String> search(Map<String, String> metadata)
 			throws ReplicationServiceException;
 
 	/**
@@ -245,6 +245,6 @@ public interface ReplicationService {
 	 * 
 	 * @throws ReplicationServiceException
 	 */
-	void close() throws ReplicationServiceException;
+	abstract void close() throws ReplicationServiceException;
 
 }

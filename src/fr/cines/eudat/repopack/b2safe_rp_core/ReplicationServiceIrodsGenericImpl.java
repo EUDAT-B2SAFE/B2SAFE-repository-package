@@ -30,10 +30,8 @@ import org.irods.jargon.core.query.MetaDataAndDomainData;
 import org.irods.jargon.core.transfer.TransferControlBlock;
 import org.irods.jargon.core.utils.LocalFileUtils;
 
-import fr.cines.eudat.repopack.b2safe_rp_core.ReplicationServiceIRODSImpl.CONFIGURATION;
 
-
-class ReplicationServiceIrodsGenericImpl implements ReplicationService {
+class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 	
 	private enum CONFIGURATION {
 		HOST,
@@ -50,8 +48,8 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 	IRODSAccount irodsAccount = null;
 	Properties configuration = null;
 	
-	@Override
-	public boolean initialize(Properties config) throws ReplicationServiceException {
+
+	protected boolean initialize(Properties config) throws ReplicationServiceException {
 
 //		SCn : change to use the properties variable passed in parameter
 //		configuration = new Properties();
@@ -90,39 +88,33 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 	
-	@Override
-	public boolean isInitialized() {
+	protected boolean isInitialized() {
 		return irodsFileSystem != null;
 	}
 	
-	@Override
-	public void replicate(String localFileName)
+	protected void replicate(String localFileName)
 			throws ReplicationServiceException {
 		replicate(localFileName, null, false);
 	}
 
-	@Override
-	public void replicate(String localFileName, Map<String, String> metadata)
+	protected void replicate(String localFileName, Map<String, String> metadata)
 			throws ReplicationServiceException {
 		replicate(localFileName, metadata, false);
 	}
 
-	@Override
-	public void replicate(String localFileName, Map<String, String> metadata,
+	protected void replicate(String localFileName, Map<String, String> metadata,
 			boolean force) throws ReplicationServiceException {
 		String defaultRemoteLocation = configuration
 				.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name());
 		replicate(localFileName, defaultRemoteLocation, metadata);
 	}
 
-	@Override
-	public void replicate(String localFileName, String remoteDirectory,
+	protected void replicate(String localFileName, String remoteDirectory,
 			Map<String, String> metadata) throws ReplicationServiceException {
 		replicate(localFileName, remoteDirectory, metadata, false);
 	}
 
-	@Override
-	public void replicate(String localFileName, String remoteDirectory, Map<String, String> metadata, boolean force) 
+	protected void replicate(String localFileName, String remoteDirectory, Map<String, String> metadata, boolean force) 
 			throws ReplicationServiceException {
 
 		try {
@@ -178,12 +170,11 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 	
-	@Override
-	public boolean delete(String path) throws ReplicationServiceException {
+	protected boolean delete(String path) throws ReplicationServiceException {
 		return delete(path, false);
 	}
 
-	public boolean delete(String path, boolean force)
+	protected boolean delete(String path, boolean force)
 			throws ReplicationServiceException {
 		try {
 
@@ -205,9 +196,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 
-	// SCN fix typo in the method name
-	@Override
-	public void retriveFile(String remoteFileName, String localFileName) 
+	protected void retrieveFile(String remoteFileName, String localFileName) 
 			throws ReplicationServiceException {
 		try {
 			if(overrideJargonProperties!=null) {
@@ -229,8 +218,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 
-	@Override
-	public void addMetadataToDataObject(String filePath,
+	protected void addMetadataToDataObject(String filePath,
 			Map<String, String> metadata) throws ReplicationServiceException {
 		try {
 			DataObjectAO dataObjectAO = irodsFileSystem
@@ -245,8 +233,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
    
-	@Override
-	public void modifyMetadataToDataObject(String filePath,
+	protected void modifyMetadataToDataObject(String filePath,
 			Map<String, String> metadata) throws ReplicationServiceException {
 		try {
 			DataObjectAO dataObjectAO = irodsFileSystem
@@ -262,8 +249,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 
-	@Override
-	public void addMetadataToCollection(String collectionPath,
+	protected void addMetadataToCollection(String collectionPath,
 			Map<String, String> metadata) throws ReplicationServiceException {
 		try {
 			CollectionAO collectionAO = irodsFileSystem
@@ -278,8 +264,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 
-	@Override
-	public void modifyMetadataToCollection(String collectionPath,
+	protected void modifyMetadataToCollection(String collectionPath,
 			Map<String, String> metadata) throws ReplicationServiceException {
 		try {
 			CollectionAO collectionAO = irodsFileSystem
@@ -295,8 +280,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 
-	// SCn add a method to read the iCat attributes for a data object stored in B2SAFE
-	public Map<String, AVUMetaData> getMetadataOfDataObject(String dataObjectAbsolutePath) 
+	protected Map<String, AVUMetaData> getMetadataOfDataObject(String dataObjectAbsolutePath) 
 			throws ReplicationServiceException {
 
 		try {
@@ -314,23 +298,19 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 
 	}
-	// End SCn
     
-	@Override
-	public List<String> list() throws ReplicationServiceException {
+	protected List<String> list() throws ReplicationServiceException {
 		return list(false);
 	}
 
-	@Override
-	public List<String> list(boolean returnAbsPath)
+	protected List<String> list(boolean returnAbsPath)
 			throws ReplicationServiceException {
 		String defaultRemoteLocation = configuration
 				.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name());
 		return list(defaultRemoteLocation, returnAbsPath);
 	}
 
-	@Override
-	public List<String> list(String remoteDirectory, boolean returnAbsPath)
+	protected List<String> list(String remoteDirectory, boolean returnAbsPath)
 			throws ReplicationServiceException {
 		try {
 
@@ -360,8 +340,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 
-	@Override
-	public List<String> search(Map<String, String> metadata)
+	protected List<String> search(Map<String, String> metadata)
 			throws ReplicationServiceException {
 		try {
 			DataObjectAO cao = irodsFileSystem.getIRODSAccessObjectFactory()
@@ -392,7 +371,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 
 	private SettableJargonProperties overrideJargonProperties = null;
 
-	public SettableJargonProperties getSettableJargonProperties() {
+	protected SettableJargonProperties getSettableJargonProperties() {
 		IRODSSession irodsSession = irodsFileSystem.getIrodsSession();
 		overrideJargonProperties = new SettableJargonProperties(
 				irodsSession.getJargonProperties());
@@ -402,7 +381,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 	/**
 	 * @return the information about the IRODS server
 	 */
-	public IRODSServerProperties gerIRODSServerProperties() {
+	protected IRODSServerProperties gerIRODSServerProperties() {
 		return irodsFileSystem
 				.getIrodsSession()
 				.getDiscoveredServerPropertiesCache()
@@ -410,8 +389,7 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 						irodsAccount.getZone());
 	}
 
-	@Override
-	public void close() throws ReplicationServiceException {
+	protected void close() throws ReplicationServiceException {
 		try {
 			irodsFileSystem.close();
 		} catch (Exception e) {
@@ -419,7 +397,6 @@ class ReplicationServiceIrodsGenericImpl implements ReplicationService {
 		}
 	}
 
-	@Override
 	protected void finalize() throws Throwable {
 		super.finalize();
 		this.close();

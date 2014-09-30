@@ -11,12 +11,13 @@
 #                                                                              #
 # Requires EUDAT core v2.1                                                     #
 #                                                                              #
-# Status : Ongoing development - Last update 25/8/2014                         #
+# Status : Ongoing development - Last update 30/09/2014                         #
 #                                                                              #
 ################################################################################
 
 # List of the functions:
 # ----------------------
+# rp_getRpIngestParameters(*protectArchive, *archiveOwner)
 # rp_EUDATePIDremoveForce(*path)
 # rp_checkMeta(*source,*AName,*AValue)
 # rp_getMeta( *source, *AName , *AValue )
@@ -25,6 +26,23 @@
 # rp_transferInitiated( *source )
 # rp_transferFinished( *source )
 # rp_changeValueinICAT(*source, *key , *newval )
+
+
+#
+# This function is used to set up some parameters for the site.       
+#
+# Arguments:
+#   *protectArchive         [OUT]    Boolean, if 'true', the replicated file will become read only for the service user
+#   *archiveOwner           [OUT]    This is the iRods user owning the archive
+#
+# Author: S Coutin (CINES)  
+#
+rp_getRpIngestParameters(*protectArchive, *archiveOwner) {
+	*protectArchive = false;
+	*archiveOwner = "rodsA";
+}
+
+
 
 #
 # This function remove an ePID... even if its 10320/loc field is not empty!
@@ -133,9 +151,11 @@ rp_countMetaKeys( *source , *AName , *AValue )
 
 rp_ingestObject( *source )
 {
+	rp_getRpIngestParameters(*protectArchive, *archiveOwner);
 
 	logInfo("ingestObject-> Check for (*source)");
 	msiDataObjChksum(*source, "null", *checksum);
+        rp_changeValueinICAT(*source, "INFO_Checksum" , *checksum ); 
 
 	rp_getMeta(       *source , "OTHER_original_checksum"  , *orig_checksum   );
 
@@ -156,6 +176,12 @@ rp_ingestObject( *source )
 		else {
 			logInfo("ingestObject-> PID created for *source PID = [*PID] ROR = [*RorValue]");
 	        	rp_changeValueinICAT(*source, "ADMIN_Status" , "Archive_ok" ) ;
+			if (*protectArchive) {
+				logInfo("ingestObject-> changing *source owner to = *archiveOwner with read access to $userNameClient");
+				msiSetACL("default","read",$userNameClient,*source);
+				msiSetACL("default","own",*archiveOwner,*source);
+			}
+
 		}
 	}
 	else
@@ -163,7 +189,6 @@ rp_ingestObject( *source )
 		logInfo("ingestObject-> Checksum (*checksum) is different than original (*orig_checksum)");
 		rp_changeValueinICAT(*source, "ADMIN_Status" , "ErrorChecksum" ) ;
 	}
-        rp_changeValueinICAT(*source, "INFO_Checksum" , *checksum ); 
 }
 
 

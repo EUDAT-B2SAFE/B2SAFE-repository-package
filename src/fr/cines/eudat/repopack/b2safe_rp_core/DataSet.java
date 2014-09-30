@@ -37,7 +37,7 @@ public class DataSet {
     private Properties prop=null;
     private InputStream input =null;
     
-    private ReplicationServiceIrodsGenericImpl replicationService = null;
+    private ReplicationService replicationService = null;
 
 /**
  * Constructor for the DataSet class
@@ -64,7 +64,7 @@ public class DataSet {
     	} catch (IOException ex) {
     		log.error(ex.getMessage());
     	}
-    	// TODO test the other values of the properties, including the one for CUNI
+    	// TODO test the other values of the properties
 
 //    	if  (prop.getProperty("B2SAFE_TRANS_PROTOCOL").equals("irods") )
     		replicationService = new ReplicationServiceIrodsGenericImpl();
@@ -122,7 +122,6 @@ public class DataSet {
     		// TODO use the metadata map from the DO - Requires to change types even in the ReplicationService class
     		// fill the metadata values in the map
     		metadataInit = new HashMap<String, String>();
-    		// TODO we need to sync up metadata name with the one expected by ingestion rule. So far it is EUDAT_ROR
     		// ROR is forced to None if it has no value.
     		metadataInit.put("EUDAT/ROR", ( doToReplicate.getRor() != null) ? doToReplicate.getRor() : "None");
     		metadataInit.put("resource_id", prop.getProperty("RESOURCE_ID"));
@@ -214,7 +213,7 @@ public class DataSet {
 			
 			// Launch Retrieval
 			log.info("Retrieve " + remoteFileAbsolutePath + " TO " + dataObject.getLocalFilePath());
-			replicationService.retriveFile(remoteFileAbsolutePath, dataObject.getLocalFilePath());
+			replicationService.retrieveFile(remoteFileAbsolutePath, dataObject.getLocalFilePath());
 			
 			//get current date time with Date() and note in end date
 			date = new Date();
@@ -248,7 +247,7 @@ public class DataSet {
 	
 	/**
 	 * FOR TEST PURPOSE ONLY
-	 * This method deletes a data object (ie a file) in EUDAT B2SAFE
+	 * This method deletes a data object in EUDAT B2SAFE
 	 * It must be used carefully as it can create a discrepancy between repository and replication
 	 * 
 	 * On the B2SAFE side, a trigger manages the deletion of first replica PID record
@@ -302,6 +301,19 @@ public class DataSet {
 			operationResult.add(deleteDO(dataObject));
 		}
 		return operationResult;
+	}
+
+	/**
+	 * Closes all connections
+	 * 
+	 */
+	public void close() {
+		try {
+			replicationService.close();
+		} catch (ReplicationServiceException ex) {
+			log.error(ex.getMessage());
+		}
+
 	}
 
 }

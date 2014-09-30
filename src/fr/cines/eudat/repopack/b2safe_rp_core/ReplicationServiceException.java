@@ -15,7 +15,7 @@ package fr.cines.eudat.repopack.b2safe_rp_core;
  * 
  */
 
-public class ReplicationServiceException extends Exception {
+class ReplicationServiceException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
@@ -23,7 +23,7 @@ public class ReplicationServiceException extends Exception {
 	 * Instantiate a new ReplicationServiceException
 	 * 
 	 */
-	public ReplicationServiceException() {
+	protected ReplicationServiceException() {
 	}
 
 	/**
@@ -31,7 +31,7 @@ public class ReplicationServiceException extends Exception {
 	 * 
 	 * @param t the root cause
 	 */
-	public ReplicationServiceException(Throwable t) {
+	protected ReplicationServiceException(Throwable t) {
 		super(t);
 	}
 
@@ -40,7 +40,7 @@ public class ReplicationServiceException extends Exception {
 	 * 
 	 * @param message the error message
 	 */
-	public ReplicationServiceException(String message) {
+	protected ReplicationServiceException(String message) {
 		super(message);
 	}
 
