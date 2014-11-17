@@ -66,10 +66,10 @@ public class DataSet {
     	}
     	// TODO test the other values of the properties
 
-//    	if  (prop.getProperty("B2SAFE_TRANS_PROTOCOL").equals("irods") )
+    	if  (prop.getProperty("B2SAFE_TRANS_PROTOCOL").trim().equals("irods") )
     		replicationService = new ReplicationServiceIrodsGenericImpl();
-//    	else
-//    		log.error("Bad property value B2SAFE_TRANS_PROTOCOL - cannot select the Replication Service");
+    	else
+    		log.error("Bad property value B2SAFE_TRANS_PROTOCOL - cannot select the Replication Service");
     }
 	
 /**
@@ -87,6 +87,19 @@ public class DataSet {
 			log.error(ex.getMessage());
 			return false;
 		} 
+
+	}
+
+	/**
+	 * Closes all connections
+	 * 
+	 */
+	public void closeConnection() {
+		try {
+			if (replicationService != null) replicationService.close();
+		} catch (ReplicationServiceException ex) {
+			log.error(ex.getMessage());
+		}
 
 	}
 
@@ -119,49 +132,53 @@ public class DataSet {
     	DataObject operationResult = new DataObject();
 
     	try {
-    		// TODO use the metadata map from the DO - Requires to change types even in the ReplicationService class
-    		// fill the metadata values in the map
-    		metadataInit = new HashMap<String, String>();
-    		// ROR is forced to None if it has no value.
-    		metadataInit.put("EUDAT/ROR", ( doToReplicate.getRor() != null) ? doToReplicate.getRor() : "None");
-    		metadataInit.put("resource_id", prop.getProperty("RESOURCE_ID"));
     		// Copy the input DO values in the output DO
     		operationResult = doToReplicate;
+    		// Open the connection
+    		if (initB2safeConnection()) {
+    			// TODO use the metadata map from the DO - Requires to change types even in the ReplicationService class
+    			// fill the metadata values in the map
+    			metadataInit = new HashMap<String, String>();
+    			// ROR is forced to None if it has no value.
+    			metadataInit.put("EUDAT/ROR", ( doToReplicate.getRor() != null) ? doToReplicate.getRor() : "None");
 
-    		// Launch replication
-    		log.info("Launch replication of " + doToReplicate.getLocalFilePath() + " to target collection " + doToReplicate.getRemoteDirPath());
-    		// Note that operation is a replication
-    		operationResult.setOperation("REPLICATE");
-    		//get current date time with Date() and note in launch date
-    		Date date = new Date();
-    		operationResult.setLaunchDate(dateFormat.format(date));
-    		// Launch replication
-    		replicationService.replicate(doToReplicate.getLocalFilePath(), doToReplicate.getRemoteDirPath(), metadataInit);
-    		// triggers the archive (currently setting ADMIN_Status = "ReadyToArchive")
-    		metadataInit.clear();
-    		metadataInit.put("ADMIN_Status", "ReadyToArchive");
-    		replicationService.modifyMetadataToDataObject(prop.getProperty("HOME_DIRECTORY") + doToReplicate.getRemoteDirPath() + doToReplicate.getFileName(), metadataInit);
+    			// Launch replication
+    			log.info("Launch replication of " + doToReplicate.getLocalFilePath() + " to target collection " + doToReplicate.getRemoteDirPath());
+    			// Note that operation is a replication
+    			operationResult.setOperation("REPLICATE");
+    			//get current date time with Date() and note in launch date
+    			Date date = new Date();
+    			operationResult.setLaunchDate(dateFormat.format(date));
+    			// Launch replication
+    			replicationService.replicate(doToReplicate.getLocalFilePath(), doToReplicate.getRemoteDirPath(), metadataInit);
+    			// triggers the archive (currently setting ADMIN_Status = "ReadyToArchive")
+    			metadataInit.clear();
+    			metadataInit.put("ADMIN_Status", "ReadyToArchive");
+    			replicationService.modifyMetadataToDataObject(prop.getProperty("HOME_DIRECTORY").trim() + doToReplicate.getRemoteDirPath() + doToReplicate.getFileName(), metadataInit);
 
-    		// Get feedback
-    		metadataFinal = replicationService.getMetadataOfDataObject(prop.getProperty("HOME_DIRECTORY") + doToReplicate.getRemoteDirPath()+doToReplicate.getFileName());
-    		for (Map.Entry<String, AVUMetaData> entry1 : metadataFinal.entrySet()) {
-    			if (entry1.getKey().equalsIgnoreCase("ADMIN_Status")) operationResult.setStatusMessage(entry1.getValue().getValue());
-    			//if (entry1.getKey().equalsIgnoreCase("INFO_TimeOfTransfer")) replicaResult.setEndDate(entry1.getValue().getValue());
-    			if (entry1.getKey().equalsIgnoreCase("OTHER_original_checksum")) operationResult.setChecksum(entry1.getValue().getValue());
-    			if (entry1.getKey().equalsIgnoreCase("PID")) operationResult.setEudatPid(entry1.getValue().getValue());
+    			// Get feedback
+    			metadataFinal = replicationService.getMetadataOfDataObject(prop.getProperty("HOME_DIRECTORY") + doToReplicate.getRemoteDirPath()+doToReplicate.getFileName());
+    			for (Map.Entry<String, AVUMetaData> entry1 : metadataFinal.entrySet()) {
+    				if (entry1.getKey().equalsIgnoreCase("ADMIN_Status")) operationResult.setStatusMessage(entry1.getValue().getValue());
+    				//if (entry1.getKey().equalsIgnoreCase("INFO_TimeOfTransfer")) replicaResult.setEndDate(entry1.getValue().getValue());
+    				if (entry1.getKey().equalsIgnoreCase("OTHER_original_checksum")) operationResult.setChecksum(entry1.getValue().getValue());
+    				if (entry1.getKey().equalsIgnoreCase("PID")) operationResult.setEudatPid(entry1.getValue().getValue());
+    			}
+    			operationResult.setEudatMetadata(metadataFinal);
+    			//get current date time with Date() and note in end date
+    			date = new Date();
+    			operationResult.setEndDate(dateFormat.format(date));
+    			operationResult.setStatus((operationResult.getStatusMessage().equals("Archive_ok") ) ? "SUCCESS" : "ERROR");
+
+
+    			// TODO remove or write to log after development
+    			System.out.println(operationResult.toString());
+    			closeConnection();
     		}
-    		operationResult.setEudatMetadata(metadataFinal);
-    		//get current date time with Date() and note in end date
-    		date = new Date();
-    		operationResult.setEndDate(dateFormat.format(date));
-    		operationResult.setStatus((operationResult.getStatusMessage().equals("Archive_ok") ) ? "SUCCESS" : "ERROR");
-
-
-    		// TODO remove or write to log after development
-    		System.out.println(operationResult.toString());
     		return operationResult;
     	} catch (ReplicationServiceException ex) {
     		log.error(ex.getMessage());
+    		closeConnection();
     		operationResult.setStatus("ERROR");
     		operationResult.setStatusMessage(ex.getMessage());
     		return operationResult;
@@ -205,7 +222,7 @@ public class DataSet {
 			Date date = new Date();
 			operationResult.setLaunchDate(dateFormat.format(date));
 
-			String remoteFileAbsolutePath = prop.getProperty("HOME_DIRECTORY") + dataObject.getRemoteDirPath()+dataObject.getFileName();
+			String remoteFileAbsolutePath = prop.getProperty("HOME_DIRECTORY").trim() + dataObject.getRemoteDirPath()+dataObject.getFileName();
 			
 			// create local directory if it doesn't exist
 			targetDirectory = new File(dataObject.getLocalFilePath());
@@ -267,7 +284,7 @@ public class DataSet {
 			Date date = new Date();
 			operationResult.setLaunchDate(dateFormat.format(date));
 
-			String fileAbsolutePath = prop.getProperty("HOME_DIRECTORY") + dataObject.getRemoteDirPath()+dataObject.getFileName();
+			String fileAbsolutePath = prop.getProperty("HOME_DIRECTORY").trim() + dataObject.getRemoteDirPath()+dataObject.getFileName();
 			// Launch deletion
 			log.info("Delete " + fileAbsolutePath);
 			// It is necessary to force the delete
@@ -303,17 +320,5 @@ public class DataSet {
 		return operationResult;
 	}
 
-	/**
-	 * Closes all connections
-	 * 
-	 */
-	public void close() {
-		try {
-			replicationService.close();
-		} catch (ReplicationServiceException ex) {
-			log.error(ex.getMessage());
-		}
-
-	}
 
 }

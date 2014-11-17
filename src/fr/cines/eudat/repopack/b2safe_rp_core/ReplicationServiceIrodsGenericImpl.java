@@ -41,7 +41,8 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 		HOME_DIRECTORY,
 		ZONE,
 		DEFAULT_STORAGE,
-		REPLICA_DIRECTORY
+		REPLICA_DIRECTORY,
+		RESOURCE_ID
 	}
 		
 	IRODSFileSystem irodsFileSystem = null;
@@ -59,14 +60,16 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 //			configuration.put(c.name(), config.get(c.name()));
 //		}
 		
-    	String host = config.getProperty(CONFIGURATION.HOST.name());
-    	String port = config.getProperty(CONFIGURATION.PORT.name());
-    	String username = config.getProperty(CONFIGURATION.USER_NAME.name());
-    	String pass = config.getProperty(CONFIGURATION.PASSWORD.name());
-    	String homedir = config.getProperty(CONFIGURATION.HOME_DIRECTORY.name());
+    	configuration = config;
+		String host = config.getProperty(CONFIGURATION.HOST.name()).trim();
+    	String port = config.getProperty(CONFIGURATION.PORT.name()).trim();
+    	String username = config.getProperty(CONFIGURATION.USER_NAME.name()).trim();
+    	String pass = config.getProperty(CONFIGURATION.PASSWORD.name()).trim();
+    	String homedir = config.getProperty(CONFIGURATION.HOME_DIRECTORY.name()).trim();
     	if ( !homedir.endsWith("/") ) homedir += "/";
-    	String zone = config.getProperty(CONFIGURATION.ZONE.name());
-    	String default_storage = config.getProperty(CONFIGURATION.DEFAULT_STORAGE.name());
+    	String zone = config.getProperty(CONFIGURATION.ZONE.name()).trim();
+    	String default_storage = config.getProperty(CONFIGURATION.DEFAULT_STORAGE.name()).trim();
+    	String resource_id = config.getProperty(CONFIGURATION.RESOURCE_ID.name()).trim();
     	    	
 		try {
 			irodsAccount = IRODSAccount.instance(host, Integer.valueOf(port),
@@ -105,7 +108,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 	protected void replicate(String localFileName, Map<String, String> metadata,
 			boolean force) throws ReplicationServiceException {
 		String defaultRemoteLocation = configuration
-				.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name());
+				.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name()).trim();
 		replicate(localFileName, defaultRemoteLocation, metadata);
 	}
 
@@ -131,6 +134,10 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			if(!targetDirectory.exists()) {
 				// SCn : changing to mkdirs as this deals with multiple levels collections
 				targetDirectory.mkdirs();
+				// Set the resource_id metadata for the new collection
+				Map<String, String> collMetadata = new HashMap<String, String>();
+				collMetadata.put("resource_id", configuration.getProperty(CONFIGURATION.RESOURCE_ID.name()).trim());
+				addMetadataToCollection(targetDirectory.getAbsolutePath(), collMetadata);
 			}
 
 			String targetFile = targetDirectory.getCanonicalPath() + IRODSFile.PATH_SEPARATOR + localFile.getName();
@@ -144,12 +151,20 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			TransferControlBlock controlBlock = irodsFileSystem
 					.getIrodsSession()
 					.buildDefaultTransferControlBlockBasedOnJargonProperties();
-
+			
+			controlBlock.resetTransferData();
 			if(force) {
 				controlBlock.getTransferOptions().setForceOption(TransferOptions.ForceOption.USE_FORCE);    		
 			}
+			controlBlock.getTransferOptions().setMaxThreads(32);
+			// controlBlock.getTransferOptions().setComputeChecksumAfterTransfer(true);
+			long startTime = System.currentTimeMillis();
 
 			dataTransferOperations.putOperation(localFile, remoteFile, null, controlBlock);
+
+			long endTime   = System.currentTimeMillis();
+			long totalTime = endTime - startTime;
+			// logTransferInfo(controlBlock, totalTime);
 
 			if(metadata==null) {
 				metadata = new HashMap<String, String>();
@@ -169,6 +184,15 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			throw new ReplicationServiceException(e);
 		}
 	}
+	
+	void logTransferInfo(TransferControlBlock tcb, long totalTime) {
+		System.out.println("Transfer duration = " + totalTime + " millisecs");
+		System.out.println("getTotalBytesToTransfer = " + tcb.getTotalBytesToTransfer());
+		System.out.println("getTotalFilesTransferredSoFar = " + tcb.getTotalFilesTransferredSoFar());
+		System.out.println("getTransferOptions = " + tcb.getTransferOptions().toString());
+	}
+	
+	
 	
 	protected boolean delete(String path) throws ReplicationServiceException {
 		return delete(path, false);
@@ -306,7 +330,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 	protected List<String> list(boolean returnAbsPath)
 			throws ReplicationServiceException {
 		String defaultRemoteLocation = configuration
-				.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name());
+				.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name()).trim();
 		return list(defaultRemoteLocation, returnAbsPath);
 	}
 

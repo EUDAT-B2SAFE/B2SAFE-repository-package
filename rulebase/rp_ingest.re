@@ -133,7 +133,7 @@ rp_countMetaKeys( *source , *AName , *AValue )
 
 	foreach   ( *B )    {
 		msiGetValByKey( *B , "META_DATA_ATTR_VALUE" , *AValue );
-		logInfo("########## Avalue= *AValue");
+		#logInfo("########## Avalue= *AValue");
 	}
 }
 
@@ -147,6 +147,7 @@ rp_countMetaKeys( *source , *AName , *AValue )
 #       *source  [IN]    target object to assign a PID
 #
 # Author: Stephane Coutin (CINES) 
+# updated : Stéphane Coutin (CINES) - 23/10/14 (use EUDATiCHECKSUMget to avoid duplicate checksum calculation)
 #-----------------------------------------------------------------------------
 
 rp_ingestObject( *source )
@@ -155,6 +156,7 @@ rp_ingestObject( *source )
 
 	logInfo("ingestObject-> Check for (*source)");
 	msiDataObjChksum(*source, "null", *checksum);
+	#EUDATiCHECKSUMget(*source, *checksum);
         rp_changeValueinICAT(*source, "INFO_Checksum" , *checksum ); 
 
 	rp_getMeta(       *source , "OTHER_original_checksum"  , *orig_checksum   );
@@ -169,7 +171,7 @@ rp_ingestObject( *source )
 
  		EUDATCreatePID("None", *source, *RorValue, bool("true"), *PID);
 		# test PID creation
-		if((*PID == "empty") || (*PID == "None")) {
+		if((*PID == "empty") || (*PID == "None") || (*PID == "error")) {
 			logInfo("ingestObject-> ERROR while creating the PID for *source PID = *PID");
 			rp_changeValueinICAT(*source, "ADMIN_Status" , "ErrorPID" ) ;
 		}

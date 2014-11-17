@@ -3,6 +3,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -13,7 +14,7 @@ import fr.cines.eudat.repopack.b2safe_rp_core.*;
 
 public class B2safeRpPilot {
 	// constants
-	public static final String versionInfo = "v1.0.1 - 30/9/2014";
+	public static final String versionInfo = "v1.0.2 - 17/11/2014";
 	
 	public static final boolean LOG_TRACE = false;
     protected static Logger log=null;
@@ -25,28 +26,33 @@ public class B2safeRpPilot {
     private static FileBasedInterface fileBasedInterface = new FileBasedInterface();
 	private static DataSet dataSet = new DataSet();
 
-	public static void main(String[] args) throws IOException {
-		new Log();
-        log= Log.getLogger(DataSet.class.getName());
-		
-		init();
-		if (prop.getProperty("PILOT_EXEC_MODE").equals("console")) {
-			// Launch menu
-			while (interactiveMenu());		
-		}
-		else {
-			if (prop.getProperty("PILOT_EXEC_MODE").equals("batch")) {
-				log.info("Launching batch mode with version : "+ versionInfo);
-				// The batch mode launches the Replication based on the available file
-		    	fileBasedInterface.initToReplicateDOList();
-		    	if (dataSet.initB2safeConnection()) 
-		    		fileBasedInterface.writeOperationResultToFile(dataSet.replicateAllRequestedDO(fileBasedInterface.initToReplicateDOList()));
-				log.info("Ending batch mode");				
+	public static void main(String[] args) {
+		try {
+			new Log();
+			log= Log.getLogger(DataSet.class.getName());
+
+			init();
+			if (prop.getProperty("PILOT_EXEC_MODE").trim().equals("console")) {
+				// Launch menu
+				log.debug("Launching console mode with version : "+ versionInfo);
+				while (interactiveMenu());		
+				log.debug("Leaving console mode with version : "+ versionInfo);
 			}
-		}
-		if (dataSet != null) dataSet.close();
+			else {
+				if (prop.getProperty("PILOT_EXEC_MODE").trim().equals("batch")) {
+					log.info("Launching batch mode with version : "+ versionInfo);
+					batchExecution();
+					log.info("Ending batch mode");				
+				}
+			}
+			if (dataSet != null) dataSet.closeConnection();
+		} catch (FileNotFoundException ex) {
+			log.error(ex.getMessage());
+		} catch (IOException ex) {
+			log.error(ex.getMessage());
+		}		
 	}
-	
+
 	private static void init() {
         
 		// Load the properties from file
@@ -97,9 +103,7 @@ public class B2safeRpPilot {
 	    	System.out.println(dataSet.testConnection());
 	    	break;
 	    case 2:
-	    	fileBasedInterface.initToReplicateDOList();
-	    	if (dataSet.initB2safeConnection()) 
-	    		fileBasedInterface.writeOperationResultToFile(dataSet.replicateAllRequestedDO(fileBasedInterface.initToReplicateDOList()));
+	    	batchExecution();
 	    	break;
 	    case 3:
 	    	if (dataSet.initB2safeConnection()) 
@@ -125,5 +129,19 @@ public class B2safeRpPilot {
 	    return true;
 	}
 
-	
+	private static boolean batchExecution() {
+		// The batch mode launches the Replication based on the available file
+		// The replication is launched file by file
+		ArrayList<DataObject> ongoingDOList = new ArrayList<DataObject>();
+
+		// Get the list from file
+		ArrayList<DataObject> toReplicateDOList = fileBasedInterface.initToReplicateDOList();
+		// Loop on the list to launch file by file, and write result after each execution
+		for (DataObject dataObject : toReplicateDOList) {
+			ongoingDOList.add(dataObject);
+			fileBasedInterface.writeOperationResultToFile(dataSet.replicateAllRequestedDO(ongoingDOList));
+			ongoingDOList.clear();
+		}
+		return true;
+	}
 }
