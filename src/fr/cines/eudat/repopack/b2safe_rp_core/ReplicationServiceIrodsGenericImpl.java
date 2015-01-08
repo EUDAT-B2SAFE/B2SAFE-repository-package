@@ -170,7 +170,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 				metadata = new HashMap<String, String>();
 			}
 
-			metadata.put("OTHER_original_checksum", LocalFileUtils.md5ByteArrayToString(LocalFileUtils.computeMD5FileCheckSumViaAbsolutePath(localFile.getAbsolutePath())));
+			metadata.put("OTHER_original_checksum", LocalFileUtils.digestByteArrayToString(LocalFileUtils.computeMD5FileCheckSumViaAbsolutePath(localFile.getAbsolutePath())));
 			metadata.put("OTHER_original_filesize", String.valueOf(localFile.length()));
 
 			if(localFile.isDirectory()) {

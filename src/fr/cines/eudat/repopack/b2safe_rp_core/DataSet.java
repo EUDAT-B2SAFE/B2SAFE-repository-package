@@ -14,11 +14,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
 
 import org.apache.log4j.Logger;
-import org.irods.jargon.core.exception.JargonException;
-import org.irods.jargon.core.utils.LocalFileUtils;
 
 /**
  * This class represents the data objects of a repository or a subset of a repository

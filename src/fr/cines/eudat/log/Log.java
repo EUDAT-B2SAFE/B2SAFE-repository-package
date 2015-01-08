@@ -19,9 +19,8 @@ public class Log {
 	public Log(){
             
 		_log4jXmlPath= "log4j.xml";
-                DOMConfigurator.configure(Log.class.getResource(_log4jXmlPath));
-          
-              
+        // DOMConfigurator.configure(Log.class.getResource(_log4jXmlPath));
+        DOMConfigurator.configure(this.getClass().getClassLoader().getResource(_log4jXmlPath));
 	}
 	
 	/**

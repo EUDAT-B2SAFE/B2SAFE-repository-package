@@ -14,7 +14,7 @@ import fr.cines.eudat.repopack.b2safe_rp_core.*;
 
 public class B2safeRpPilot {
 	// constants
-	public static final String versionInfo = "v1.0.2 - 17/11/2014";
+	public static final String versionInfo = "v1.0.5 - Under construction";
 	
 	public static final boolean LOG_TRACE = false;
     protected static Logger log=null;
@@ -24,7 +24,7 @@ public class B2safeRpPilot {
     private static Scanner scanner = new Scanner (System.in);
 
     private static FileBasedInterface fileBasedInterface = new FileBasedInterface();
-	private static DataSet dataSet = new DataSet();
+	private static DataSet dataSet = null;
 
 	public static void main(String[] args) {
 		try {
@@ -32,6 +32,7 @@ public class B2safeRpPilot {
 			log= Log.getLogger(DataSet.class.getName());
 
 			init();
+			dataSet = new DataSet();
 			if (prop.getProperty("PILOT_EXEC_MODE").trim().equals("console")) {
 				// Launch menu
 				log.debug("Launching console mode with version : "+ versionInfo);

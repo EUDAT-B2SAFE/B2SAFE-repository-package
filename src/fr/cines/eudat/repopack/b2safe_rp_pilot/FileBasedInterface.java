@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
-import fr.cines.eudat.repopack.b2safe_rp_core.AVUMetaData;
 import fr.cines.eudat.repopack.b2safe_rp_core.DataObject;
 import fr.cines.eudat.repopack.b2safe_rp_core.DataSet;
 
@@ -101,9 +100,9 @@ class FileBasedInterface {
 			bwErr.close();
 			
 		} catch (FileNotFoundException ex) {
-			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
+			B2safeRpPilot.log.error("Text file not found");
 		} catch (IOException ex) {
-			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
+			B2safeRpPilot.log.error("Text file IO exception");
 		}
 		finally
 		{
@@ -115,7 +114,7 @@ class FileBasedInterface {
 			} 
 			catch (IOException ex) 
 			{
-				java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
+				B2safeRpPilot.log.error("Text file IO exception");
 			}
 		}
 	}
@@ -140,13 +139,9 @@ class FileBasedInterface {
 
 		try {
 			//Read Dataobject in file
+			B2safeRpPilot.log.debug("Text file to read is : "+ textFilePath);
 			toReadTextFile = new File(textFilePath);
-
-			//Verify if file exists. 
-			if(toReadTextFile.exists())
-			{
-				reader = new BufferedReader(new FileReader(toReadTextFile));
-			}
+			reader = new BufferedReader(new FileReader(toReadTextFile));
 
 			String line;
 			DataObject dataObject;
@@ -154,6 +149,7 @@ class FileBasedInterface {
 			{    
 				while ((line=reader.readLine())!=null)
 				{
+					B2safeRpPilot.log.debug("line is ["+ line+"]");
 					// Jumps over the header line
 					if (headerLine) {
 						headerLine = false;
@@ -193,9 +189,9 @@ class FileBasedInterface {
 				}
 			}
 		} catch (FileNotFoundException ex) {
-			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
+			B2safeRpPilot.log.error("Text file not found : "+ textFilePath);
 		} catch (IOException ex) {
-			java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
+			B2safeRpPilot.log.error("Text file IO exception : "+ textFilePath);
 		}
 		finally
 		{
@@ -206,7 +202,7 @@ class FileBasedInterface {
 			} 
 			catch (IOException ex) 
 			{
-				java.util.logging.Logger.getLogger(DataSet.class.getName()).log(Level.SEVERE, null, ex);
+				B2safeRpPilot.log.error("Text file IO exception : "+ textFilePath);
 			}
 		}
 		return resultDOList;
