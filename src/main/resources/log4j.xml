@@ -48,7 +48,6 @@
 		</filter>
 	</appender>
 
-
 	<appender name="file-error_isaac" class="org.apache.log4j.RollingFileAppender">
 		<param name="file" value="${RP_LOG_DIR}/error.log" />
 		<param name="Append" value="true" />
@@ -74,7 +73,7 @@
 	</logger>
 
   <root> 
-    <priority value ="DEBUG" /> 
+    <priority value ="${RP_LOG_LEVEL}" /> 
   </root>
 	<!-- <logger name="fr.cines.isaac" additivity="false"> <appender-ref ref="console" 
 		/> </logger> -->

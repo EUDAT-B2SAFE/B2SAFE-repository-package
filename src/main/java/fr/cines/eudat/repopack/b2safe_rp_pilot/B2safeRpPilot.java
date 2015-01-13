@@ -35,9 +35,9 @@ public class B2safeRpPilot {
 			dataSet = new DataSet();
 			if (prop.getProperty("PILOT_EXEC_MODE").trim().equals("console")) {
 				// Launch menu
-				log.debug("Launching console mode with version : "+ versionInfo);
+				log.info("Launching console mode with version : "+ versionInfo);
 				while (interactiveMenu());		
-				log.debug("Leaving console mode with version : "+ versionInfo);
+				log.info("Leaving console mode with version : "+ versionInfo);
 			}
 			else {
 				if (prop.getProperty("PILOT_EXEC_MODE").trim().equals("batch")) {
