@@ -14,7 +14,7 @@ import fr.cines.eudat.repopack.b2safe_rp_core.*;
 
 public class B2safeRpPilot {
 	// constants
-	public static final String versionInfo = "v1.0.5 - Under construction";
+	public static final String versionInfo = "v1.0.5 - 14 jan 2015   ";
 	
 	public static final boolean LOG_TRACE = false;
     protected static Logger log=null;

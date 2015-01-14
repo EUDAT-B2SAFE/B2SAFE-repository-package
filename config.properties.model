@@ -22,7 +22,7 @@ operationErrorResultFile = C:\\tmp\\result\\OperationErrorResult.txt
 # B2SAFE parameters
 ############################################
 # Resource ID is the ID assigned to the storage resource in the EUDAT RCT tool for the dataset or project
-RESOURCE_ID = c681604c1fd0428d88dd9310bb8f2902
+RESOURCE_ID = WillBeProvidedByEudat
 # B2SAFE_TRANS_PROTOCOL values limited to "irods" for now on
 B2SAFE_TRANS_PROTOCOL irods 
 
@@ -34,19 +34,3 @@ PASSWORD = *********
 HOME_DIRECTORY = /TheZone/home/project_name/ingest_collection
 ZONE = TheZone
 DEFAULT_STORAGE = transResc
-
-
-############################################
-#  NOT USED
-############################################
-
-DSSFileResult=.DSSfile
-
-
-
-
-
-
-scratchDirectory = scratch/
-requestDirectory = request/
-

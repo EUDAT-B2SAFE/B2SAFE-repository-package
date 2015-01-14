@@ -160,7 +160,6 @@ public class DataObject {
         }
         else
         {
-            //String path=EudatIngestionSiteIrods.homeDirectory+EudatIngestionSiteIrods.scratchDirectory;
             sb.append("Default remote path");
         }
                 
@@ -202,7 +201,7 @@ public class DataObject {
         if (eudatMetadata!=null)
         {
 			for (Map.Entry<String, AVUMetaData> entry1 : eudatMetadata.entrySet()) {
-				sb.append(entry1.toString());
+				sb.append("\r\n"+entry1.toString());
 			}
         }
         sb.append(" ]");

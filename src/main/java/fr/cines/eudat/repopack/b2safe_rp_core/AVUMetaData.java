@@ -72,7 +72,7 @@ public class AVUMetaData {
         sb.append("=");
         sb.append(value);
         if (unit!=null){ sb.append("**"); sb.append(unit);}
-        sb.append(" ]");
+        sb.append("] ");
         return sb.toString();
 
     }

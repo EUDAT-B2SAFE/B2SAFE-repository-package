@@ -167,9 +167,7 @@ public class DataSet {
     			operationResult.setEndDate(dateFormat.format(date));
     			operationResult.setStatus((operationResult.getStatusMessage().equals("Archive_ok") ) ? "SUCCESS" : "ERROR");
 
-
-    			// TODO remove or write to log after development
-    			System.out.println(operationResult.toString());
+    			log.debug(operationResult.toString());
     			closeConnection();
     		}
     		return operationResult;

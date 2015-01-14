@@ -125,8 +125,15 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 				irodsFileSystem.getIrodsSession().setJargonProperties(overrideJargonProperties);
 			}
 
-			File localFile = new File(localFileName);    	
+			// Calculate local file related metadata. This checks also that the local file exists
+			File localFile = new File(localFileName);    				
+			if(metadata==null) {
+				metadata = new HashMap<String, String>();
+			}
+			metadata.put("OTHER_original_filesize", String.valueOf(localFile.length()));
+			metadata.put("OTHER_original_checksum", LocalFileUtils.digestByteArrayToString(LocalFileUtils.computeMD5FileCheckSumViaAbsolutePath(localFile.getAbsolutePath())));
 
+			// Handle the data transfer operation
 			IRODSFileFactory irodsFileFactory = irodsFileSystem .getIRODSFileFactory(irodsAccount);
 
 			IRODSFile targetDirectory = irodsFileFactory.instanceIRODSFile(irodsAccount.getHomeDirectory() + remoteDirectory);
@@ -166,13 +173,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			long totalTime = endTime - startTime;
 			// logTransferInfo(controlBlock, totalTime);
 
-			if(metadata==null) {
-				metadata = new HashMap<String, String>();
-			}
-
-			metadata.put("OTHER_original_checksum", LocalFileUtils.digestByteArrayToString(LocalFileUtils.computeMD5FileCheckSumViaAbsolutePath(localFile.getAbsolutePath())));
-			metadata.put("OTHER_original_filesize", String.valueOf(localFile.length()));
-
+			// Write remote file metadata
 			if(localFile.isDirectory()) {
 				addMetadataToCollection(remoteFile.getAbsolutePath(), metadata);
 			} else {

@@ -42,7 +42,7 @@ class FileBasedInterface {
 
     
     /**
-     * Used to convert the data object to a string fitting with the rp_console output file format
+     * Used to convert the data object to a string fitting with the rp_pilot output file format
      * 
      * @return
      * 		The string representing the data object
