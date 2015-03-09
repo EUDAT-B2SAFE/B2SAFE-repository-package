@@ -14,7 +14,7 @@ import fr.cines.eudat.repopack.b2safe_rp_core.*;
 
 public class B2safeRpPilot {
 	// constants
-	public static final String versionInfo = "v1.0.5 - 14 jan 2015   ";
+	public static final String versionInfo = "v1.1.0 - Work in progress   ";
 	
 	public static final boolean LOG_TRACE = false;
     protected static Logger log=null;
@@ -32,7 +32,7 @@ public class B2safeRpPilot {
 			log= Log.getLogger(DataSet.class.getName());
 
 			init();
-			dataSet = new DataSet();
+			dataSet = new DataSet(prop);
 			if (prop.getProperty("PILOT_EXEC_MODE").trim().equals("console")) {
 				// Launch menu
 				log.info("Launching console mode with version : "+ versionInfo);
@@ -62,7 +62,7 @@ public class B2safeRpPilot {
 			input = new FileInputStream("config.properties");
 			if(input==null) 
 			{
-				log.debug("Unable to find config.properties");
+				log.error("Unable to find config.properties");
 			}
 			else
 			{
@@ -80,6 +80,7 @@ public class B2safeRpPilot {
 	
 	private static boolean interactiveMenu() throws IOException {
 	    int swValue;
+	    String dataEntry;
 
 	    // Display menu graphics
 	    System.out.println("=========================================================");
@@ -92,6 +93,8 @@ public class B2safeRpPilot {
 	    System.out.println("|        2. Replicate based on ToReplicate file         |");
 	    System.out.println("|        3. Delete based on ToDelete file (TEST ONLY)   |");
 	    System.out.println("|        4. Retrieve files based on ToRetrieve file     |");
+	    System.out.println("|        5. List files contained in a directory         |");
+	    System.out.println("|        6. List B2SAFE metadata for one file           |");
 	    System.out.println("|        9. Test handling of DO file                    |");
 	    System.out.println("|        0. Exit                                        |");
 	    System.out.println("=========================================================");
@@ -101,18 +104,39 @@ public class B2safeRpPilot {
 	    // Switch construct
 	    switch (swValue) {
 	    case 1:
-	    	System.out.println(dataSet.testConnection());
+	    	System.out.println(testConnection()==true ? "Connected" : "Not connected");
+	    	System.out.println(dataSet.getServerInformationToString());
 	    	break;
 	    case 2:
 	    	batchExecution();
 	    	break;
 	    case 3:
-	    	if (dataSet.initB2safeConnection()) 
+	    	if (testConnection()) 
 	    		fileBasedInterface.writeOperationResultToFile(dataSet.deleteAllRequestedDO(fileBasedInterface.initToDeleteDOList()));
 	    	break;
 	    case 4:
 	    	if (dataSet.initB2safeConnection()) 
 	    		fileBasedInterface.writeOperationResultToFile(dataSet.retrieveListOfDOByPath(fileBasedInterface.initToRetrieveDOList()));
+	    	break;
+	    case 5:
+		    System.out.println("Enter collection path : ");
+		    dataEntry = scanner.next();
+	    	if (dataSet.initB2safeConnection()) {
+				for (DataObject dataObject : dataSet.listDOFromDirectory(dataEntry, false)) {
+					System.out.println(dataObject.toString());
+				}
+			}
+	    	break;
+	    case 6:
+		    System.out.println("Enter file path (relative to base directory) : ");
+		    dataEntry = scanner.next();
+		    DataObject tmpDO = new DataObject();
+		    tmpDO.setFileName(dataEntry);
+		    tmpDO.setRemoteDirPath("");
+		    
+	    	if (testConnection()) {
+				System.out.println(dataSet.getMetadataFromOneDOByPath(tmpDO).toString());
+			}
 	    	break;
 	    case 9:
 			for (DataObject dataObject : fileBasedInterface.initToReplicateDOList()) {
@@ -145,4 +169,24 @@ public class B2safeRpPilot {
 		}
 		return true;
 	}
+	
+    /*
+     * 
+     */
+    public static boolean testConnection() {
+    	if (dataSet.isInitialized()) {
+    		log.debug("Already connected to B2SAFE ");
+    		return true;
+    	}
+    	else {
+    		if (dataSet.initB2safeConnection()) {
+    			log.debug("Successful connection to B2SAFE ");
+    			return true;
+    		}
+    		else {
+    			log.debug("Error connecting to B2SAFE ");
+    			return false;
+    		}
+    	}
+    }
 }

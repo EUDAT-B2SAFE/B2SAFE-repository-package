@@ -34,3 +34,5 @@ PASSWORD = *********
 HOME_DIRECTORY = /TheZone/home/project_name/ingest_collection
 ZONE = TheZone
 DEFAULT_STORAGE = transResc
+
+IRODS_TRANSFER_MAX_THREADS 32

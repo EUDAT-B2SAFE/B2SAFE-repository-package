@@ -239,6 +239,15 @@ abstract class ReplicationService {
 	 */
 	abstract List<String> search(Map<String, String> metadata)
 			throws ReplicationServiceException;
+	
+	/**
+	 * Get some information about the server. This depends upon the protocol.
+	 * 
+	 * @return
+	 * 		List of server properties
+	 */
+	abstract Map<String, String> getServerInformation();
+
 
 	/**
 	 * close all the open connections and resources

@@ -3,6 +3,8 @@ package fr.cines.eudat.repopack.b2safe_rp_core;
 import java.util.HashMap;
 import java.util.Map;
 
+import fr.cines.eudat.repopack.b2safe_rp_core.DataSet.B2SAFE_CONFIGURATION;
+
 /**
  * This class represents a data object from the repository. 
  * Even if the data object is replicated as a file, additional information (some metadata) describes the object
@@ -16,10 +18,10 @@ import java.util.Map;
  */
 public class DataObject {
 	private String operation; 
-	private String repositoryIdentifier;
 	private String fileName;
 	private String localFilePath;
 	private String remoteDirPath;
+	private boolean remoteDirPathIsAbsolute = false;
 	private String checksum;
 	private String ror;
 	private String eudatPid;
@@ -29,42 +31,82 @@ public class DataObject {
 	private String statusMessage;
 	private Map<String, AVUMetaData> eudatMetadata = new HashMap<String, AVUMetaData>();
 	
+	/**
+	 * Get the value of the operation applied to the data object
+	 * @return
+	 * 		String describing the operation, could be REPLICATE, RETRIEVE, DELETE
+	 */
     public String getOperation() {
         return operation;
     }
 
+    /**
+     * Set the value of the operation applied to the data object
+     * @param operation
+     * 		String describing the operation, could be REPLICATE, RETRIEVE, DELETE
+     */
     public void setOperation(String operation) {
         this.operation = operation;
     }
 
-    public String getRepositoryIdentifier() {
-        return repositoryIdentifier;
-    }
-
-    public void setRepositoryIdentifier(String repositoryIdentifier) {
-        this.repositoryIdentifier = repositoryIdentifier;
-    }
-
+    /**
+     * Get the file name of the data object
+     * 
+     * @return
+     * 		file name
+     */
     public String getFileName() {
         return fileName;
     }
 
+    /**
+     * Set the file name of the data object
+     * 
+     * @param fileName
+     * 		file name
+     */
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
 
+    /**
+     * Get the local file path for the data object.
+     * This is the absolute path.
+     * 
+     * @return
+     * 		Local file absolute path
+     */
     public String getLocalFilePath() {
         return localFilePath;
     }
 
+    /**
+     * Set the local file path for the data object.
+     * This is the absolute path.
+     * 
+     * @param localFilePath
+     * 		Local file absolute path
+     */
     public void setLocalFilePath(String localFilePath) {
         this.localFilePath = localFilePath;
     }
 
+    /**
+     * Get the data object file MD5 checksum on the local system
+     * 
+     * @return
+     * 		Checksum as a string
+     */
     public String getChecksum() {
         return checksum;
     }
 
+    /**
+     * Get the data object file MD5 checksum on the local system
+     * 
+     * @param checksum
+     * 		Checksum as a string
+     */
     public void setChecksum(String checksum) {
         this.checksum = checksum;
     }
@@ -125,6 +167,14 @@ public class DataObject {
         this.remoteDirPath = remoteFilePath;
     }
     
+    public boolean getRemoteDirPathIsAbsolute() {
+        return remoteDirPathIsAbsolute;
+    }
+
+    public void setRemoteDirPathIsAbsolute(boolean isAbsolute) {
+        this.remoteDirPathIsAbsolute = isAbsolute;
+    }
+    
     public void setEudatMetadata(Map<String, AVUMetaData> tmpEudatMetadata) {
     	this.eudatMetadata = tmpEudatMetadata;
     }
@@ -136,7 +186,22 @@ public class DataObject {
     	this.eudatMetadata.put(avu.getAttribute(), avu);
     }
 
+    public boolean getOperationIsSuccess() {
+    	return (this.getStatus()=="SUCCESS" ? true : false);
+    }
     
+    public void setOperationIsSuccess() {
+    	this.setStatus("SUCCESS");
+    }
+    
+    public void setOperationIsFailure(String errorMessage) {
+    	this.setStatus("ERROR");
+    	this.setStatusMessage(errorMessage);
+    }
+    
+    public String getAbsoluteRemoteDirPath(String homeDirectory){
+    	return (this.getRemoteDirPathIsAbsolute() ? this.getRemoteDirPath() : homeDirectory + this.getRemoteDirPath());
+    }
     /**
      * This returns the data object properties on a readable format. Can be used for logging
      * 
@@ -149,14 +214,16 @@ public class DataObject {
     {
         
         StringBuilder sb= new StringBuilder();
-        sb.append("[fileName => ");
+        sb.append("\r\nDATA OBJECT\r\n ");
+        sb.append("fileName => ");
         sb.append(fileName);
-        sb.append(", localFilePath => ");
+        sb.append("\r\n localFilePath => ");
         sb.append(localFilePath);
-        sb.append(", remoteFilePath => ");
+        sb.append("\r\n remoteFilePath => ");
         if(remoteDirPath!=null)
         {
             sb.append(remoteDirPath);
+            sb.append(remoteDirPathIsAbsolute ? " (Absolute)" : " (Relative)");
         }
         else
         {
@@ -165,41 +232,47 @@ public class DataObject {
                 
         if(ror!=null)
         {
-             sb.append(", ROR => ");
+             sb.append("\r\n ROR => ");
              sb.append(ror);
         }
         
         if(eudatPid!=null)
         {
-             sb.append(", eudatPid => ");
+             sb.append("\r\n eudatPid => ");
              sb.append(eudatPid);
         }
         
         if(checksum!=null)
         {
-             sb.append(", checksum => ");
+             sb.append("\r\n checksum => ");
              sb.append(checksum);
         }
         
         if(launchDate!=null)
         {
-             sb.append(", Start date => ");
+             sb.append("\r\n Start date => ");
              sb.append(launchDate);
         }
         
         if(endDate!=null)
         {
-             sb.append(", End date => ");
+             sb.append("\r\n End date => ");
              sb.append(endDate);
         }
         
         if(status!=null)
         {
-             sb.append(", adminStatus => ");
+             sb.append("\r\n adminStatus => ");
              sb.append(status);
+        }
+        if(statusMessage!=null)
+        {
+             sb.append(" : ");
+             sb.append(statusMessage);
         }
         if (eudatMetadata!=null)
         {
+            sb.append("\r\nMETADATA");
 			for (Map.Entry<String, AVUMetaData> entry1 : eudatMetadata.entrySet()) {
 				sb.append("\r\n"+entry1.toString());
 			}

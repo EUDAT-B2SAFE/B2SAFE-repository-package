@@ -67,12 +67,8 @@ public class AVUMetaData {
     public String toString()
     {
         StringBuilder sb= new StringBuilder();
-        sb.append("[AVU => ");
-        sb.append(attribute);
-        sb.append("=");
         sb.append(value);
-        if (unit!=null){ sb.append("**"); sb.append(unit);}
-        sb.append("] ");
+        if (unit!=null){ sb.append(unit);}
         return sb.toString();
 
     }

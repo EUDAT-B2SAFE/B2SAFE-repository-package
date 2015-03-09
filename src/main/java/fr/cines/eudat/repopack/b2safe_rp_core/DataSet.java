@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -21,7 +22,7 @@ import org.apache.log4j.Logger;
  * This class represents the data objects of a repository or a subset of a repository
  * All those data objects have the same replication target.
  * It is necessary to create an instance of this class to start using rp_core features.
- * It uses the properties from the config.properties file to get the replication parameters
+ * It uses the properties contained in the constructor parameter to get the replication parameters
  * 
  * The class offers methods to launch the replication actions
  * 
@@ -29,44 +30,84 @@ import org.apache.log4j.Logger;
  *
  */
 public class DataSet {
-	// public Object name;
+	/**
+	 * List the properties used as parameter for B2SAFE
+	 * @author "S. Coutin (CINES)"
+	 *
+	 */
+	public static enum B2SAFE_CONFIGURATION {
+		/**
+		 * Resource ID is the ID assigned to the storage resource in the EUDAT RCT tool for the dataset or project.
+		 * Will be provided by EUDAT datacentre
+		 */
+		RESOURCE_ID,
+		/**
+		 * Transfer protocol to use. Values limited to "irods" for now on
+		 */
+		B2SAFE_TRANS_PROTOCOL,
+		/**
+		 * The B2SAFE server URI
+		 */
+		HOST,
+		/**
+		 * The port used to connect to server. For example 1247 is the default port for the iRods protocol.
+		 */
+		PORT,
+		/**
+		 * User login
+		 */
+		USER_NAME,
+		/**
+		 * User password
+		 */
+		PASSWORD,
+		/**
+		 * User home directory.
+		 */
+		HOME_DIRECTORY,
+		/**
+		 * The irods zone
+		 */
+		ZONE,
+		/**
+		 * The iRods resource on which files are stored
+		 */
+		DEFAULT_STORAGE, 
+		/**
+		 * This parameter defines the maximum number of parallel transfer threads for the iRods transfer protocol
+		 */
+		IRODS_TRANSFER_MAX_THREADS
+	}
+	
+	public static enum B2SAFE_TRANS_PROTOCOL_VALUES {
+		irods
+	}	
+	
 	protected static Logger log=null;
-    private Properties prop=null;
+    protected Properties prop=null;
     private InputStream input =null;
     
     private ReplicationService replicationService = null;
 
 /**
  * Constructor for the DataSet class
+ * @param properties
+ * 		the properties containing the values for the B2SAFE_CONFIGURATION parameters
  */
-    public DataSet(){
+    public DataSet(Properties properties){
     	new Log();
     	log= Log.getLogger(DataSet.class.getName());
 
-    	// Load the properties from file
-    	prop= new Properties();		
-    	try {
-    		input = new FileInputStream("config.properties");
-    		if(input==null) 
-    		{
-    			log.debug("Unable to find config.properties");
-    		}
-    		else
-    		{
-    			prop.load(input);
-    			log.debug("init OK");
-    		}
-    	} catch (FileNotFoundException ex) {
-    		log.error(ex.getMessage());
-    	} catch (IOException ex) {
-    		log.error(ex.getMessage());
-    	}
-    	// TODO test the other values of the properties
+    	// get the properties from the parameter
+    	prop= properties;
 
-    	if  (prop.getProperty("B2SAFE_TRANS_PROTOCOL").trim().equals("irods") )
-    		replicationService = new ReplicationServiceIrodsGenericImpl();
-    	else
-    		log.error("Bad property value B2SAFE_TRANS_PROTOCOL - cannot select the Replication Service");
+    	if (replicationService == null){
+    		// Instantiate the relevant replication service, based on properties
+    		if  (prop.getProperty(B2SAFE_CONFIGURATION.B2SAFE_TRANS_PROTOCOL.name()).trim().equals(B2SAFE_TRANS_PROTOCOL_VALUES.irods.name()) )
+    			replicationService = new ReplicationServiceIrodsGenericImpl();
+    		else
+    			log.error("Bad property value B2SAFE_TRANS_PROTOCOL - cannot select the Replication Service");
+    	}
     }
 	
 /**
@@ -99,22 +140,40 @@ public class DataSet {
 		}
 
 	}
-
-    /**
-     * To remove
-     */
-    public String testConnection() {
-    	if (replicationService.isInitialized()) {
-    		return "Already connected to B2SAFE ";
-    	}
-    	else {
-    		if (this.initB2safeConnection())
-    			return "Successful connection to B2SAFE ";
-    		else
-    			return "Error connecting to B2SAFE ";
-    	}
-    }
 	
+	/**
+	 * Test if the connection is initialized
+	 * 
+	 * @return 
+	 * 		true if connection is initilized,
+	 * 		false if not 
+	 */
+	public boolean isInitialized() {
+		return replicationService.isInitialized();
+	}
+	
+	/**
+	 * Get some information about the server. This depends upon the protocol.
+	 * 
+	 * @return
+	 * 		List of server properties
+	 */
+	public Map<String, String> getServerInformation() {
+		return replicationService.getServerInformation();
+	}
+	
+	public String getServerInformationToString() {
+		StringBuilder sb= new StringBuilder();
+		Map<String, String> serverInformation =  replicationService.getServerInformation();
+		
+		for (Map.Entry<String, String> entry : serverInformation.entrySet()) {
+		    sb.append(entry.getKey() + " = " + entry.getValue() + "\r\n");
+		}
+		
+		return sb.toString();
+
+	}
+
 	/**
 	 * Replication of one data object from the repository to EUDAT B2SAFE
 	 * @param doToReplicate
@@ -127,6 +186,7 @@ public class DataSet {
     	Map<String, AVUMetaData> metadataFinal = null;
     	DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     	DataObject operationResult = new DataObject();
+		String remoteDirAbsolutePath = null;
 
     	try {
     		// Copy the input DO values in the output DO
@@ -140,21 +200,26 @@ public class DataSet {
     			metadataInit.put("EUDAT/ROR", ( doToReplicate.getRor() != null) ? doToReplicate.getRor() : "None");
 
     			// Launch replication
-    			log.info("Launch replication of " + doToReplicate.getLocalFilePath() + " to target collection " + doToReplicate.getRemoteDirPath());
+    			if (doToReplicate.getRemoteDirPathIsAbsolute())
+    				remoteDirAbsolutePath = doToReplicate.getRemoteDirPath()+doToReplicate.getFileName();
+    			else
+    				remoteDirAbsolutePath = prop.getProperty(B2SAFE_CONFIGURATION.HOME_DIRECTORY.name()).trim() + doToReplicate.getRemoteDirPath()+doToReplicate.getFileName();
+    			
+    			log.info("Launch replication of " + doToReplicate.getLocalFilePath() + " to target directory " + remoteDirAbsolutePath);
     			// Note that operation is a replication
     			operationResult.setOperation("REPLICATE");
     			//get current date time with Date() and note in launch date
     			Date date = new Date();
     			operationResult.setLaunchDate(dateFormat.format(date));
     			// Launch replication
-    			replicationService.replicate(doToReplicate.getLocalFilePath(), doToReplicate.getRemoteDirPath(), metadataInit);
+    			replicationService.replicate(doToReplicate.getLocalFilePath(), remoteDirAbsolutePath, metadataInit);
     			// triggers the archive (currently setting ADMIN_Status = "ReadyToArchive")
     			metadataInit.clear();
     			metadataInit.put("ADMIN_Status", "ReadyToArchive");
-    			replicationService.modifyMetadataToDataObject(prop.getProperty("HOME_DIRECTORY").trim() + doToReplicate.getRemoteDirPath() + doToReplicate.getFileName(), metadataInit);
+    			replicationService.modifyMetadataToDataObject(remoteDirAbsolutePath + doToReplicate.getFileName(), metadataInit);
 
     			// Get feedback
-    			metadataFinal = replicationService.getMetadataOfDataObject(prop.getProperty("HOME_DIRECTORY") + doToReplicate.getRemoteDirPath()+doToReplicate.getFileName());
+    			metadataFinal = replicationService.getMetadataOfDataObject(remoteDirAbsolutePath + doToReplicate.getFileName());
     			for (Map.Entry<String, AVUMetaData> entry1 : metadataFinal.entrySet()) {
     				if (entry1.getKey().equalsIgnoreCase("ADMIN_Status")) operationResult.setStatusMessage(entry1.getValue().getValue());
     				//if (entry1.getKey().equalsIgnoreCase("INFO_TimeOfTransfer")) replicaResult.setEndDate(entry1.getValue().getValue());
@@ -202,12 +267,17 @@ public class DataSet {
 	 * Retrieve a data object (ie a file) from B2SAFE and store it in the repository
 	 * 
 	 * @param dataObject
-	 * 		Description of the data object to retrieve, full path on B2SAFE must be provided
+	 * 		Description of the data object to retrieve, 
+	 * 		Remote DO is identified by the fileName and the remoteDirPath.
+	 * 		The remoteDirPath is relative unless RemoteDirPathIsAbsolute is true
+	 * 		The local copy is stored on LocalFilePath directory
+	 *
 	 */
 	public DataObject retrieveOneDOByPath (DataObject dataObject){
 		DataObject operationResult = new DataObject();
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		File targetDirectory = null;
+		String remoteFileAbsolutePath = null;
 
 		try {
 			operationResult = dataObject;
@@ -217,7 +287,10 @@ public class DataSet {
 			Date date = new Date();
 			operationResult.setLaunchDate(dateFormat.format(date));
 
-			String remoteFileAbsolutePath = prop.getProperty("HOME_DIRECTORY").trim() + dataObject.getRemoteDirPath()+dataObject.getFileName();
+			if (dataObject.getRemoteDirPathIsAbsolute())
+				remoteFileAbsolutePath = dataObject.getRemoteDirPath()+dataObject.getFileName();
+			else
+				remoteFileAbsolutePath = prop.getProperty(B2SAFE_CONFIGURATION.HOME_DIRECTORY.name()).trim() + dataObject.getRemoteDirPath()+dataObject.getFileName();
 			
 			// create local directory if it doesn't exist
 			targetDirectory = new File(dataObject.getLocalFilePath());
@@ -265,38 +338,49 @@ public class DataSet {
 	 * On the B2SAFE side, a trigger manages the deletion of first replica PID record
 	 * 
 	 * @param dataObject
-	 * 		in this release, the DO to delete is identified by the fileName and the remoteDirPath
+	 * 		in this release, the DO to delete is identified by the fileName and the remoteDirPath. 
+	 * 		The remoteDirPath is relative unless RemoteDirPathIsAbsolute is true
 	 */
 	public DataObject deleteDO(DataObject dataObject) {
 		DataObject operationResult = new DataObject();
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		String fileAbsolutePath = null;
 
 		try {
 			operationResult = dataObject;
 			// Note that operation is a deletion
 			operationResult.setOperation("DELETE");
-			//get current date time with Date() and note in launch date
+			// get current date time with Date() and note in launch date
 			Date date = new Date();
 			operationResult.setLaunchDate(dateFormat.format(date));
 
-			String fileAbsolutePath = prop.getProperty("HOME_DIRECTORY").trim() + dataObject.getRemoteDirPath()+dataObject.getFileName();
+			if (dataObject.getRemoteDirPathIsAbsolute())
+				fileAbsolutePath = dataObject.getRemoteDirPath()+dataObject.getFileName();
+			else
+				fileAbsolutePath = prop.getProperty(B2SAFE_CONFIGURATION.HOME_DIRECTORY.name()).trim() + dataObject.getRemoteDirPath()+dataObject.getFileName();
+			
 			// Launch deletion
 			log.info("Delete " + fileAbsolutePath);
-			// It is necessary to force the delete
-			// TODO implement on the iRods connector once an interface will be created
-			replicationService.delete(fileAbsolutePath, true);
-			
-			//get current date time with Date() and note in end date
+			// It is necessary to force the delete,
+			// The delete methods returns a boolean value of true if file exists, false if not
+			if (replicationService.delete(fileAbsolutePath, true)) {
+				operationResult.setStatus("SUCCESS");
+			}
+			else
+			{
+				operationResult.setStatus("ERROR");
+				operationResult.setStatusMessage("File doesn't exist");
+			}
+			// get current date time with Date() and note in end date
 			date = new Date();
 			operationResult.setEndDate(dateFormat.format(date));
-			operationResult.setStatus("SUCCESS");
 			return operationResult;
-	} catch (ReplicationServiceException ex) {
-		log.error(ex.getMessage());
-		operationResult.setStatus("ERROR");
-		operationResult.setStatusMessage(ex.getMessage());
-		return operationResult;
-	} 
+		} catch (ReplicationServiceException ex) {
+			log.error(ex.getMessage());
+			operationResult.setStatus("ERROR");
+			operationResult.setStatusMessage(ex.getMessage());
+			return operationResult;
+		}
 	}
 
 	/**
@@ -315,5 +399,102 @@ public class DataSet {
 		return operationResult;
 	}
 
+	/**
+	 * List the content of a given directory in B2SAFE, with the ability to use absolute or relative path
+	 * 
+	 * @param remoteDirectoryPath
+	 * 		Remote directory path. If relative, the base path is the HOME_DIRECTORY property
+	 * @param isAbsolute
+	 * 		true if the path is absolute, false if relative
+	 */
+	public List<DataObject> listDOFromDirectory (String remoteDirectoryPath, boolean isAbsolute){
+		String remoteDirectoryAbsolutePath = null;
+		
+		remoteDirectoryAbsolutePath = (isAbsolute ? remoteDirectoryPath : prop.getProperty(B2SAFE_CONFIGURATION.HOME_DIRECTORY.name()).trim() + remoteDirectoryPath);
+		return listDOFromDirectory(remoteDirectoryAbsolutePath);
+	}
 
+	/**
+	 * List the content of a given directory in B2SAFE.
+	 * 
+	 * @param remoteDirectoryPath
+	 * 		remote directory absolute path.
+	 */
+	public List<DataObject> listDOFromDirectory (String remoteDirectoryAbsolutePath){
+		List<DataObject> doList = new ArrayList<DataObject>();
+		List<String> doFullPathList = new ArrayList<String>();
+		Map<String, AVUMetaData> mdList = new HashMap<String, AVUMetaData>();
+		
+		try {
+			log.debug("List content of absolute directory ["+ remoteDirectoryAbsolutePath + "]");
+			doFullPathList = replicationService.list(remoteDirectoryAbsolutePath, true);
+			// Loop all the results
+			for (String doName:doFullPathList) {
+				DataObject tmpDO = new DataObject();
+
+				// set the DO information
+				tmpDO.setRemoteDirPath(doName);
+				tmpDO.setRemoteDirPathIsAbsolute(true);
+				// set the DO metadata
+				tmpDO.setEudatMetadata(replicationService.getMetadataOfDataObject(doName));
+				// add DO to the list
+				doList.add(tmpDO);
+			}
+		
+			return doList;
+			
+		} catch (ReplicationServiceException ex) {
+			log.error(ex.getMessage());
+			return doList;
+		} 
+	}
+
+	/**
+	 * 
+	 * @param dataObject
+	 * 		DataObject identifying the file by the fileName and the remoteDirPath. 
+	 * 		The remoteDirPath is relative unless RemoteDirPathIsAbsolute is true
+	 * @return
+	 * 		A DataObject updated with eudatMetadata populated from B2SAFE.
+	 * 		If the operation is successful, DataObject is set to "SUCCESS" 
+	 * 		If the operation has failed, DataObject is set to "ERROR" 
+	 */
+	public DataObject getMetadataFromOneDOByPath (DataObject dataObject){
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		File targetDirectory = null;
+		String remoteFileAbsolutePath = null;
+
+		try {
+			// Note that operation is a matadata retrieval
+			dataObject.setOperation("MD_READ");
+			//get current date time with Date() and note in launch date
+			Date date = new Date();
+			dataObject.setLaunchDate(dateFormat.format(date));
+
+			if (dataObject.getRemoteDirPathIsAbsolute())
+				remoteFileAbsolutePath = dataObject.getRemoteDirPath()+dataObject.getFileName();
+			else
+				remoteFileAbsolutePath = prop.getProperty(B2SAFE_CONFIGURATION.HOME_DIRECTORY.name()).trim() + dataObject.getRemoteDirPath()+dataObject.getFileName();
+			
+			// Launch Retrieval
+			log.info("Retrieve " + remoteFileAbsolutePath + " Metadata ");
+			dataObject.setEudatMetadata(replicationService.getMetadataOfDataObject(remoteFileAbsolutePath));
+			
+			//get current date time with Date() and note in end date
+			date = new Date();
+			dataObject.setEndDate(dateFormat.format(date));
+			dataObject.setStatus("SUCCESS");
+			
+			return dataObject;
+			
+		} catch (ReplicationServiceException ex) {
+			log.error(ex.getMessage());
+			dataObject.setStatus("ERROR");
+			dataObject.setStatusMessage(ex.getMessage());
+			return dataObject;
+		} 
+		
+	}
+	
+	
 }

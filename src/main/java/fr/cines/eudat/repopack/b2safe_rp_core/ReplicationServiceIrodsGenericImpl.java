@@ -14,6 +14,7 @@ import org.irods.jargon.core.connection.IRODSSession;
 import org.irods.jargon.core.connection.SettableJargonProperties;
 import org.irods.jargon.core.connection.auth.AuthResponse;
 import org.irods.jargon.core.exception.JargonException;
+import org.irods.jargon.core.exception.JargonRuntimeException;
 import org.irods.jargon.core.packinstr.TransferOptions;
 import org.irods.jargon.core.pub.CollectionAO;
 import org.irods.jargon.core.pub.DataObjectAO;
@@ -30,21 +31,12 @@ import org.irods.jargon.core.query.MetaDataAndDomainData;
 import org.irods.jargon.core.transfer.TransferControlBlock;
 import org.irods.jargon.core.utils.LocalFileUtils;
 
+import fr.cines.eudat.repopack.b2safe_rp_core.DataSet.B2SAFE_CONFIGURATION;
+
+
 
 class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 	
-	private enum CONFIGURATION {
-		HOST,
-		PORT,
-		USER_NAME,
-		PASSWORD,
-		HOME_DIRECTORY,
-		ZONE,
-		DEFAULT_STORAGE,
-		REPLICA_DIRECTORY,
-		RESOURCE_ID
-	}
-		
 	IRODSFileSystem irodsFileSystem = null;
 	IRODSAccount irodsAccount = null;
 	Properties configuration = null;
@@ -61,15 +53,14 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 //		}
 		
     	configuration = config;
-		String host = config.getProperty(CONFIGURATION.HOST.name()).trim();
-    	String port = config.getProperty(CONFIGURATION.PORT.name()).trim();
-    	String username = config.getProperty(CONFIGURATION.USER_NAME.name()).trim();
-    	String pass = config.getProperty(CONFIGURATION.PASSWORD.name()).trim();
-    	String homedir = config.getProperty(CONFIGURATION.HOME_DIRECTORY.name()).trim();
+		String host = config.getProperty(B2SAFE_CONFIGURATION.HOST.name()).trim();
+    	String port = config.getProperty(B2SAFE_CONFIGURATION.PORT.name()).trim();
+    	String username = config.getProperty(B2SAFE_CONFIGURATION.USER_NAME.name()).trim();
+    	String pass = config.getProperty(B2SAFE_CONFIGURATION.PASSWORD.name()).trim();
+    	String homedir = config.getProperty(B2SAFE_CONFIGURATION.HOME_DIRECTORY.name()).trim();
     	if ( !homedir.endsWith("/") ) homedir += "/";
-    	String zone = config.getProperty(CONFIGURATION.ZONE.name()).trim();
-    	String default_storage = config.getProperty(CONFIGURATION.DEFAULT_STORAGE.name()).trim();
-    	String resource_id = config.getProperty(CONFIGURATION.RESOURCE_ID.name()).trim();
+    	String zone = config.getProperty(B2SAFE_CONFIGURATION.ZONE.name()).trim();
+    	String default_storage = config.getProperty(B2SAFE_CONFIGURATION.DEFAULT_STORAGE.name()).trim();
     	    	
 		try {
 			irodsAccount = IRODSAccount.instance(host, Integer.valueOf(port),
@@ -77,9 +68,8 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 
 			irodsFileSystem = IRODSFileSystem.instance();
 
-			AuthResponse response = irodsFileSystem
-					.getIRODSAccessObjectFactory().authenticateIRODSAccount(
-							irodsAccount);
+			AuthResponse response = irodsFileSystem.getIRODSAccessObjectFactory().authenticateIRODSAccount(irodsAccount);
+			overrideJargonProperties(getSettableJargonProperties());
 
 			return response.isSuccessful();
 		} catch (NumberFormatException e) {
@@ -108,7 +98,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 	protected void replicate(String localFileName, Map<String, String> metadata,
 			boolean force) throws ReplicationServiceException {
 		String defaultRemoteLocation = configuration
-				.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name()).trim();
+				.getProperty(B2SAFE_CONFIGURATION.DEFAULT_STORAGE.name()).trim();
 		replicate(localFileName, defaultRemoteLocation, metadata);
 	}
 
@@ -143,7 +133,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 				targetDirectory.mkdirs();
 				// Set the resource_id metadata for the new collection
 				Map<String, String> collMetadata = new HashMap<String, String>();
-				collMetadata.put("resource_id", configuration.getProperty(CONFIGURATION.RESOURCE_ID.name()).trim());
+				collMetadata.put("resource_id", configuration.getProperty(B2SAFE_CONFIGURATION.RESOURCE_ID.name()).trim());
 				addMetadataToCollection(targetDirectory.getAbsolutePath(), collMetadata);
 			}
 
@@ -163,7 +153,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			if(force) {
 				controlBlock.getTransferOptions().setForceOption(TransferOptions.ForceOption.USE_FORCE);    		
 			}
-			controlBlock.getTransferOptions().setMaxThreads(32);
+			// controlBlock.getTransferOptions().setMaxThreads(32);
 			// controlBlock.getTransferOptions().setComputeChecksumAfterTransfer(true);
 			long startTime = System.currentTimeMillis();
 
@@ -211,12 +201,19 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			IRODSFileFactory irodsFileFactory = irodsFileSystem
 					.getIRODSFileFactory(irodsAccount);
 			IRODSFile remoteFile = irodsFileFactory.instanceIRODSFile(path);
-			if (force) {
-				return remoteFile.deleteWithForceOption();
-			} else {
-				return remoteFile.delete();
+			if (remoteFile.exists()) {
+				if (force) {
+					return remoteFile.deleteWithForceOption();
+				} else {
+					return remoteFile.delete();
+				}
+			}
+			else {
+				return (false);
 			}
 		} catch (JargonException e) {
+			throw new ReplicationServiceException(e);
+		} catch (JargonRuntimeException e) {
 			throw new ReplicationServiceException(e);
 		}
 	}
@@ -331,7 +328,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 	protected List<String> list(boolean returnAbsPath)
 			throws ReplicationServiceException {
 		String defaultRemoteLocation = configuration
-				.getProperty(CONFIGURATION.REPLICA_DIRECTORY.name()).trim();
+				.getProperty(B2SAFE_CONFIGURATION.DEFAULT_STORAGE.name()).trim();
 		return list(defaultRemoteLocation, returnAbsPath);
 	}
 
@@ -344,11 +341,9 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 						overrideJargonProperties);
 			}
 
-			IRODSFileFactory irodsFileFactory = irodsFileSystem
-					.getIRODSFileFactory(irodsAccount);
-			IRODSFile irodsDirectory = irodsFileFactory
-					.instanceIRODSFile(irodsAccount.getHomeDirectory()
-							+ remoteDirectory);
+			IRODSFileFactory irodsFileFactory = irodsFileSystem.getIRODSFileFactory(irodsAccount);
+			IRODSFile irodsDirectory = irodsFileFactory.instanceIRODSFile(remoteDirectory);
+
 			String[] list = irodsDirectory.list();
 			List<String> retList = new ArrayList<String>();
 			for (String l : list) {
@@ -361,6 +356,8 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			}
 			return retList;
 		} catch (JargonException e) {
+			throw new ReplicationServiceException(e);
+		} catch (JargonRuntimeException e) {
 			throw new ReplicationServiceException(e);
 		}
 	}
@@ -402,17 +399,39 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 				irodsSession.getJargonProperties());
 		return overrideJargonProperties;
 	}
+	
+	private void overrideJargonProperties(SettableJargonProperties properties) {
+    	String maxThreads = configuration.getProperty(B2SAFE_CONFIGURATION.IRODS_TRANSFER_MAX_THREADS.name()).trim();
+        
+        if(maxThreads!=null) {
+        	try{
+        		properties.setMaxParallelThreads(Integer.parseInt(maxThreads));
+        	}catch(Exception ex) {        		
+        	}
+        }
+        
+    }
 
 	/**
 	 * @return the information about the IRODS server
 	 */
-	protected IRODSServerProperties gerIRODSServerProperties() {
-		return irodsFileSystem
+	protected Map<String, String> getServerInformation() {
+    	Map<String, String> info = new HashMap<String, String>();
+    	
+    	IRODSServerProperties serverProperties = irodsFileSystem
 				.getIrodsSession()
 				.getDiscoveredServerPropertiesCache()
 				.retrieveIRODSServerProperties(irodsAccount.getHost(),
 						irodsAccount.getZone());
-	}
+    	info.put("JARGON_VERSION", IRODSServerProperties.getJargonVersion());    	
+    	info.put("API_VERSION", serverProperties.getApiVersion());
+    	info.put("REL_VERSION", serverProperties.getRelVersion());
+    	info.put("RODS_ZONE", serverProperties.getRodsZone());
+    	info.put("INITIALIZE_DATE", serverProperties.getInitializeDate().toString());
+    	info.put("SERVER_BOOT_TIME", "" + serverProperties.getServerBootTime());
+    	info.put("ICAT_ENABLED", serverProperties.getIcatEnabled().toString());    	
+    	return info;
+    }
 
 	protected void close() throws ReplicationServiceException {
 		try {
