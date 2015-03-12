@@ -19,12 +19,12 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 
 /**
- * This class represents the data objects of a repository or a subset of a repository
- * All those data objects have the same replication target.
- * It is necessary to create an instance of this class to start using rp_core features.
- * It uses the properties contained in the constructor parameter to get the replication parameters
- * 
- * The class offers methods to launch the replication actions
+ * This class represents the data objects of a repository or a subset of a repository<br>
+ * All those data objects have the same replication target.<br>
+ * It is necessary to create an instance of this class to start using rp_core features.<br>
+ * It uses the properties contained in the constructor parameter to get the replication parameters<br>
+ * <br>
+ * The class offers methods to launch the replication actions<br>
  * 
  * @author "S. Coutin (CINES)"
  *
@@ -37,7 +37,7 @@ public class DataSet {
 	 */
 	public static enum B2SAFE_CONFIGURATION {
 		/**
-		 * Resource ID is the ID assigned to the storage resource in the EUDAT RCT tool for the dataset or project.
+		 * Resource ID is the ID assigned to the storage resource in the EUDAT RCT tool for the dataset or project.<br>
 		 * Will be provided by EUDAT datacentre
 		 */
 		RESOURCE_ID,
@@ -111,7 +111,7 @@ public class DataSet {
     }
 	
 /**
- * Initialize the connection to EUDAT B2SAFE service
+ * Initialize the connection to EUDAT B2SAFE service<br>
  * Must be done before launching any action
  * 
  * @return 
@@ -145,7 +145,7 @@ public class DataSet {
 	 * Test if the connection is initialized
 	 * 
 	 * @return 
-	 * 		true if connection is initilized,
+	 * 		true if connection is initialized,<br>
 	 * 		false if not 
 	 */
 	public boolean isInitialized() {
@@ -159,23 +159,35 @@ public class DataSet {
 	 * 		List of server properties
 	 */
 	public Map<String, String> getServerInformation() {
-		return replicationService.getServerInformation();
+		try {
+			return replicationService.getServerInformation();
+		} catch (ReplicationServiceException ex) {
+			log.error(ex.getMessage());
+			closeConnection();
+			return null;
+		} 
+
 	}
 	
 	public String getServerInformationToString() {
 		StringBuilder sb= new StringBuilder();
-		Map<String, String> serverInformation =  replicationService.getServerInformation();
-		
-		for (Map.Entry<String, String> entry : serverInformation.entrySet()) {
-		    sb.append(entry.getKey() + " = " + entry.getValue() + "\r\n");
-		}
-		
-		return sb.toString();
 
+		try {
+			Map<String, String> serverInformation =  replicationService.getServerInformation();
+
+			for (Map.Entry<String, String> entry : serverInformation.entrySet()) {
+				sb.append(entry.getKey() + " = " + entry.getValue() + "\r\n");
+			}
+			return sb.toString();
+		} catch (ReplicationServiceException ex) {
+			log.error(ex.getMessage());
+			closeConnection();
+			return null;
+		} 
 	}
 
 	/**
-	 * Replication of one data object from the repository to EUDAT B2SAFE
+	 * Replication of one data object from the repository to EUDAT B2SAFE<br>
 	 * @param doToReplicate
 	 * 		Description of the data object to replicate in B2SAFE
 	 * @return 
@@ -246,7 +258,7 @@ public class DataSet {
     }
 
 	/**
-	 * Replicate a list of data objects from the repository to EUDAT B2SAFE.
+	 * Replicate a list of data objects from the repository to EUDAT B2SAFE.<br>
 	 * It tries to replicate each of the list data objects, even if one replication fails
 	 * 
 	 * @see replicateOneDO
@@ -267,9 +279,9 @@ public class DataSet {
 	 * Retrieve a data object (ie a file) from B2SAFE and store it in the repository
 	 * 
 	 * @param dataObject
-	 * 		Description of the data object to retrieve, 
-	 * 		Remote DO is identified by the fileName and the remoteDirPath.
-	 * 		The remoteDirPath is relative unless RemoteDirPathIsAbsolute is true
+	 * 		Description of the data object to retrieve, <br>
+	 * 		Remote DO is identified by the fileName and the remoteDirPath.<br>
+	 * 		The remoteDirPath is relative unless RemoteDirPathIsAbsolute is true<br>
 	 * 		The local copy is stored on LocalFilePath directory
 	 *
 	 */
@@ -331,14 +343,14 @@ public class DataSet {
 	}
 	
 	/**
-	 * FOR TEST PURPOSE ONLY
-	 * This method deletes a data object in EUDAT B2SAFE
-	 * It must be used carefully as it can create a discrepancy between repository and replication
-	 * 
-	 * On the B2SAFE side, a trigger manages the deletion of first replica PID record
+	 * FOR TEST PURPOSE ONLY<br>
+	 * This method deletes a data object in EUDAT B2SAFE<br>
+	 * It must be used carefully as it can create a discrepancy between repository and replication<br>
+	 * <br>
+	 * On the B2SAFE side, a trigger manages the deletion of first replica PID record<br>
 	 * 
 	 * @param dataObject
-	 * 		in this release, the DO to delete is identified by the fileName and the remoteDirPath. 
+	 * 		in this release, the DO to delete is identified by the fileName and the remoteDirPath.<br> 
 	 * 		The remoteDirPath is relative unless RemoteDirPathIsAbsolute is true
 	 */
 	public DataObject deleteDO(DataObject dataObject) {
@@ -384,7 +396,7 @@ public class DataSet {
 	}
 
 	/**
-	 * FOR TEST PURPOSE ONLY
+	 * FOR TEST PURPOSE ONLY<br>
 	 * Deletes a list of data objects
 	 * 
 	 * @see deleteDO
@@ -450,13 +462,13 @@ public class DataSet {
 	}
 
 	/**
-	 * 
+	 * Read the metadata for a given data object
 	 * @param dataObject
-	 * 		DataObject identifying the file by the fileName and the remoteDirPath. 
-	 * 		The remoteDirPath is relative unless RemoteDirPathIsAbsolute is true
+	 * 		DataObject identifying the file by the fileName and the remoteDirPath.<br> 
+	 * 		The remoteDirPath is relative unless RemoteDirPathIsAbsolute is true<br>
 	 * @return
-	 * 		A DataObject updated with eudatMetadata populated from B2SAFE.
-	 * 		If the operation is successful, DataObject is set to "SUCCESS" 
+	 * 		A DataObject updated with eudatMetadata populated from B2SAFE.<br>
+	 * 		If the operation is successful, DataObject is set to "SUCCESS" <br>
 	 * 		If the operation has failed, DataObject is set to "ERROR" 
 	 */
 	public DataObject getMetadataFromOneDOByPath (DataObject dataObject){

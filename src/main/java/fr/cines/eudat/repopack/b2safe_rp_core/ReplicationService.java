@@ -246,7 +246,8 @@ abstract class ReplicationService {
 	 * @return
 	 * 		List of server properties
 	 */
-	abstract Map<String, String> getServerInformation();
+	abstract Map<String, String> getServerInformation()
+			throws ReplicationServiceException;
 
 
 	/**

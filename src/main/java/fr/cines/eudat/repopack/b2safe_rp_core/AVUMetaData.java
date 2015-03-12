@@ -1,7 +1,7 @@
 package fr.cines.eudat.repopack.b2safe_rp_core;
 
 /**
- * This class represents a metadata with an Attribute, Value, Unit format
+ * This class represents a metadata with an Attribute, Value, Unit format<br>
  * Getter and setter methods are available to handle the different properties
  * 
  * @author "S. Coutin (CINES)"

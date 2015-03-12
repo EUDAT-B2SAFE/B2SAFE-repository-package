@@ -3,14 +3,12 @@ package fr.cines.eudat.repopack.b2safe_rp_core;
 import java.util.HashMap;
 import java.util.Map;
 
-import fr.cines.eudat.repopack.b2safe_rp_core.DataSet.B2SAFE_CONFIGURATION;
-
 /**
- * This class represents a data object from the repository. 
+ * This class represents a data object from the repository. <br>
  * Even if the data object is replicated as a file, additional information (some metadata) describes the object
- * and its replication.
- * Getter and setter methods are available to handle the different properties
- *  
+ * and its replication.<br>
+ * Getter and setter methods are available to handle the different properties<br>
+ *  <br>
  * NOTE : This class has the potential to be extended with additional metadata 
  * 
  * @author "S. Coutin (CINES)"
@@ -102,7 +100,7 @@ public class DataObject {
     }
 
     /**
-     * Get the data object file MD5 checksum on the local system
+     * Set the data object file MD5 checksum on the local system
      * 
      * @param checksum
      * 		Checksum as a string
@@ -111,97 +109,249 @@ public class DataObject {
         this.checksum = checksum;
     }
 
+    /**
+     * Get the ROR (Record Of Reference). This is usually the PID of the object in the repository
+     * 
+     * @return
+     * 		ROR (Record Of Reference)
+     */
     public String getRor() {
         return ror;
     }
 
+    /**
+     * Set the ROR (Record Of Reference). This is usually the PID of the object in the repository
+     * 
+     * @param ror
+     * 		ROR (Record Of Reference)
+     */
     public void setRor(String ror) {
         this.ror = ror;
     }
 
+    /**
+     * Get the PID assigned by EUDAT B2SAFE to the first replica
+     * 
+     * @return
+     * 		PID
+     */
     public String getEudatPid() {
         return eudatPid;
     }
 
+    /**
+     * Set the PID assigned by EUDAT B2SAFE
+     * 
+     * @param eudatPid
+     * 		
+     */
     public void setEudatPid(String eudatPid) {
         this.eudatPid = eudatPid;
     }
 
+    /**
+     * Get the operation launch date and time
+     * 
+     * @return
+     * 		Launch date as a String
+     */
     public String getLaunchDate() {
         return launchDate;
     }
 
-    public void setLaunchDate(String replicaLaunchDate) {
+    /**
+     * Set the operation launch date and time
+     * 
+     * @param replicaLaunchDate
+     * 		
+     */
+    protected void setLaunchDate(String replicaLaunchDate) {
         this.launchDate = replicaLaunchDate;
     }
 
+    /**
+     * Get the operation completion date and time
+     * 
+     * @return
+     * 		Completion date as a String
+     */
     public String getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(String replicaSuccessDate) {
-        this.endDate = replicaSuccessDate;
+    /**
+     * Set the operation completion date and time
+     * 
+     * @param endDate
+     * 		
+     */
+    protected void setEndDate(String endDate) {
+        this.endDate = endDate;
     }
 
+    /**
+     * Get the operation status
+     * 
+     * @return
+     * 		operation status ("SUCCESS" or "ERROR")
+     */
     public String getStatus() {
         return status;
     }
 
-    public void setStatus(String error) {
-        this.status = error;
+    /**
+     * Set the operation status
+     * 
+     * @param status
+     * 		
+     */
+    protected void setStatus(String status) {
+        this.status = status;
     }
 
+    /**
+     * Get the message associated to the operation status
+     * 
+     * @return
+     * 		satus message
+     */
     public String getStatusMessage() {
         return statusMessage;
     }
 
-    public void setStatusMessage(String errorMsg) {
-        this.statusMessage = errorMsg;
+    /**
+     * Set the message associated to the operation status
+     * 
+     * @param statusMsg
+     * 		
+     */
+    protected void setStatusMessage(String statusMsg) {
+        this.statusMessage = statusMsg;
     }
 
+    /**
+     * Get the path to EUDAT B2SAFE directory (named also collection).<br>
+     * The path can be either absolute or relative<br>
+     * @see setRemoteDirPathIsAbsolute
+     * 
+     * @return
+     * 		EUDAT B2SAFE directory
+     */
     public String getRemoteDirPath() {
         return remoteDirPath;
     }
 
+    /**
+     * Set the path to EUDAT B2SAFE directory (named also collection).<br>
+     * The path can be either absolute or relative.<br>
+     * Must be used in conjunction with setRemoteDirPathIsAbsolute method<br>
+     * @see setRemoteDirPathIsAbsolute
+     * 
+     * @param remoteFilePath
+     * 		
+     */
     public void setRemoteDirPath(String remoteFilePath) {
         this.remoteDirPath = remoteFilePath;
     }
     
+    /**
+     * Identify whether the EUDAT B2SAFE path is absolute <br>
+     * or relative (the basis being the HOME_DIRECTORY property)
+     * 
+     * @return
+     * 		true if path is absolute<br>
+     * 		false if path is related (this si the default value)
+     */
     public boolean getRemoteDirPathIsAbsolute() {
         return remoteDirPathIsAbsolute;
     }
 
+    /**
+     * Define whether the EUDAT B2SAFE path is absolute <br>
+     * or relative (the basis being the HOME_DIRECTORY property) 
+     * 
+     * @param isAbsolute
+     * 		true if path is absolute<br>
+     * 		false if path is related (this si the default value)
+     * 		
+     */
     public void setRemoteDirPathIsAbsolute(boolean isAbsolute) {
         this.remoteDirPathIsAbsolute = isAbsolute;
     }
     
+    /**
+     * Replace all the metadata for the data object
+     * 
+     * @param tmpEudatMetadata
+     * 		
+     */
     public void setEudatMetadata(Map<String, AVUMetaData> tmpEudatMetadata) {
     	this.eudatMetadata = tmpEudatMetadata;
     }
+
+    /**
+     * Read all the metadata for the data object
+     * 
+     * @return 
+     * 		tmpEudatMetadata map of metadata as Attribute Value Unit
+     * 		
+     */
     public Map<String, AVUMetaData> getEudatMetadata (){
     	return this.eudatMetadata;
     }
     
+    /**
+     * Add one metadata to the data object
+     * 
+     * @param avu
+     * 		metadata as Attribute Value Unit
+     */
     public void addOneEudatMetadata (AVUMetaData avu) {
     	this.eudatMetadata.put(avu.getAttribute(), avu);
     }
 
+    /**
+     * Get the operation status as a boolean
+     * 
+     * @return
+     * 		true if operation succeeded<br>
+     * 		false if operation failed
+     * 		
+     */
     public boolean getOperationIsSuccess() {
     	return (this.getStatus()=="SUCCESS" ? true : false);
     }
     
-    public void setOperationIsSuccess() {
+    /**
+     * Set the operation status as being a success
+     * 
+     */
+    protected void setOperationIsSuccess() {
     	this.setStatus("SUCCESS");
     }
     
-    public void setOperationIsFailure(String errorMessage) {
+    /**
+     * Set the operation status and status message in case of failure
+     * 
+     * @param errorMessage
+     * 		The message associated with the status
+     * 		
+     */
+    protected void setOperationIsFailure(String errorMessage) {
     	this.setStatus("ERROR");
     	this.setStatusMessage(errorMessage);
     }
     
+    /**
+     * Get the absolute path to EUDAT B2SAFE directory (named also collection).
+     * 
+     * @return
+     * 		EUDAT B2SAFE directory
+     */
     public String getAbsoluteRemoteDirPath(String homeDirectory){
     	return (this.getRemoteDirPathIsAbsolute() ? this.getRemoteDirPath() : homeDirectory + this.getRemoteDirPath());
     }
+
     /**
      * This returns the data object properties on a readable format. Can be used for logging
      * 

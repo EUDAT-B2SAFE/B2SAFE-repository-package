@@ -105,7 +105,7 @@ public class B2safeRpPilot {
 	    switch (swValue) {
 	    case 1:
 	    	System.out.println(testConnection()==true ? "Connected" : "Not connected");
-	    	System.out.println(dataSet.getServerInformationToString());
+	    	if (dataSet.isInitialized()) System.out.println(dataSet.getServerInformationToString());
 	    	break;
 	    case 2:
 	    	batchExecution();

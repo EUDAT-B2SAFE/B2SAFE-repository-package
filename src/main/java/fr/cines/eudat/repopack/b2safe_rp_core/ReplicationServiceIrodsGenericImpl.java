@@ -44,14 +44,6 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 
 	protected boolean initialize(Properties config) throws ReplicationServiceException {
 
-//		SCn : change to use the properties variable passed in parameter
-//		configuration = new Properties();
-//		
-//		/* copy required configuration */
-//		for(CONFIGURATION c : CONFIGURATION.values()) {
-//			configuration.put(c.name(), config.get(c.name()));
-//		}
-		
     	configuration = config;
 		String host = config.getProperty(B2SAFE_CONFIGURATION.HOST.name()).trim();
     	String port = config.getProperty(B2SAFE_CONFIGURATION.PORT.name()).trim();
@@ -415,23 +407,31 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 	/**
 	 * @return the information about the IRODS server
 	 */
-	protected Map<String, String> getServerInformation() {
-    	Map<String, String> info = new HashMap<String, String>();
-    	
-    	IRODSServerProperties serverProperties = irodsFileSystem
-				.getIrodsSession()
-				.getDiscoveredServerPropertiesCache()
-				.retrieveIRODSServerProperties(irodsAccount.getHost(),
-						irodsAccount.getZone());
-    	info.put("JARGON_VERSION", IRODSServerProperties.getJargonVersion());    	
-    	info.put("API_VERSION", serverProperties.getApiVersion());
-    	info.put("REL_VERSION", serverProperties.getRelVersion());
-    	info.put("RODS_ZONE", serverProperties.getRodsZone());
-    	info.put("INITIALIZE_DATE", serverProperties.getInitializeDate().toString());
-    	info.put("SERVER_BOOT_TIME", "" + serverProperties.getServerBootTime());
-    	info.put("ICAT_ENABLED", serverProperties.getIcatEnabled().toString());    	
-    	return info;
-    }
+	protected Map<String, String> getServerInformation() throws ReplicationServiceException {
+		Map<String, String> info = new HashMap<String, String>();
+
+		try {
+			IRODSServerProperties serverProperties = irodsFileSystem
+					.getIrodsSession()
+					.getDiscoveredServerPropertiesCache()
+					.retrieveIRODSServerProperties(irodsAccount.getHost(),
+							irodsAccount.getZone());
+			if (serverProperties != null){
+				info.put("JARGON_VERSION", IRODSServerProperties.getJargonVersion());    	
+				info.put("API_VERSION", serverProperties.getApiVersion());
+				info.put("REL_VERSION", serverProperties.getRelVersion());
+				info.put("RODS_ZONE", serverProperties.getRodsZone());
+				info.put("INITIALIZE_DATE", serverProperties.getInitializeDate().toString());
+				info.put("SERVER_BOOT_TIME", "" + serverProperties.getServerBootTime());
+				info.put("ICAT_ENABLED", serverProperties.getIcatEnabled().toString());    		
+			}
+			return info;
+		} catch (JargonRuntimeException e) {
+			throw new ReplicationServiceException(e);
+		} catch (NullPointerException e) {
+			throw new ReplicationServiceException(e);
+		}
+	}
 
 	protected void close() throws ReplicationServiceException {
 		try {
