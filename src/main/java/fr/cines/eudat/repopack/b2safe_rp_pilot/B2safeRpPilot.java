@@ -14,7 +14,7 @@ import fr.cines.eudat.repopack.b2safe_rp_core.*;
 
 public class B2safeRpPilot {
 	// constants
-	public static final String versionInfo = "v1.1.0 - Work in progress   ";
+	public static final String versionInfo = "v1.1.0";
 	
 	public static final boolean LOG_TRACE = false;
     protected static Logger log=null;
@@ -33,6 +33,7 @@ public class B2safeRpPilot {
 
 			init();
 			dataSet = new DataSet(prop);
+			if (dataSet == null) return;
 			if (prop.getProperty("PILOT_EXEC_MODE").trim().equals("console")) {
 				// Launch menu
 				log.info("Launching console mode with version : "+ versionInfo);

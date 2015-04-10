@@ -100,10 +100,15 @@ public class DataSet {
 
     	// get the properties from the parameter
     	prop= properties;
-
+    	// check required properties are available
+    	if (prop.getProperty(B2SAFE_CONFIGURATION.B2SAFE_TRANS_PROTOCOL.name()) == null) {
+    		prop.put("B2SAFE_TRANS_PROTOCOL", "irods");
+    		log.info("Property B2SAFE_TRANS_PROTOCOL is missing; setting to irods as default value");
+    	}
+    	
     	if (replicationService == null){
     		// Instantiate the relevant replication service, based on properties
-    		if  (prop.getProperty(B2SAFE_CONFIGURATION.B2SAFE_TRANS_PROTOCOL.name()).trim().equals(B2SAFE_TRANS_PROTOCOL_VALUES.irods.name()) )
+    		if  (prop.getProperty(B2SAFE_CONFIGURATION.B2SAFE_TRANS_PROTOCOL.name()).trim().equals("irods") )
     			replicationService = new ReplicationServiceIrodsGenericImpl();
     		else
     			log.error("Bad property value B2SAFE_TRANS_PROTOCOL - cannot select the Replication Service");
@@ -205,18 +210,13 @@ public class DataSet {
     		operationResult = doToReplicate;
     		// Open the connection
     		if (initB2safeConnection()) {
-    			// TODO use the metadata map from the DO - Requires to change types even in the ReplicationService class
     			// fill the metadata values in the map
     			metadataInit = new HashMap<String, String>();
     			// ROR is forced to None if it has no value.
     			metadataInit.put("EUDAT/ROR", ( doToReplicate.getRor() != null) ? doToReplicate.getRor() : "None");
 
-    			// Launch replication
-    			if (doToReplicate.getRemoteDirPathIsAbsolute())
-    				remoteDirAbsolutePath = doToReplicate.getRemoteDirPath()+doToReplicate.getFileName();
-    			else
-    				remoteDirAbsolutePath = prop.getProperty(B2SAFE_CONFIGURATION.HOME_DIRECTORY.name()).trim() + doToReplicate.getRemoteDirPath()+doToReplicate.getFileName();
-    			
+    			// Launch replication   			
+    			remoteDirAbsolutePath = doToReplicate.getAbsoluteRemoteDirPath(prop.getProperty(B2SAFE_CONFIGURATION.HOME_DIRECTORY.name()).trim());
     			log.info("Launch replication of " + doToReplicate.getLocalFilePath() + " to target directory " + remoteDirAbsolutePath);
     			// Note that operation is a replication
     			operationResult.setOperation("REPLICATE");

@@ -118,7 +118,7 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			// Handle the data transfer operation
 			IRODSFileFactory irodsFileFactory = irodsFileSystem .getIRODSFileFactory(irodsAccount);
 
-			IRODSFile targetDirectory = irodsFileFactory.instanceIRODSFile(irodsAccount.getHomeDirectory() + remoteDirectory);
+			IRODSFile targetDirectory = irodsFileFactory.instanceIRODSFile(remoteDirectory);
 
 			if(!targetDirectory.exists()) {
 				// SCn : changing to mkdirs as this deals with multiple levels collections
@@ -145,8 +145,6 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 			if(force) {
 				controlBlock.getTransferOptions().setForceOption(TransferOptions.ForceOption.USE_FORCE);    		
 			}
-			// controlBlock.getTransferOptions().setMaxThreads(32);
-			// controlBlock.getTransferOptions().setComputeChecksumAfterTransfer(true);
 			long startTime = System.currentTimeMillis();
 
 			dataTransferOperations.putOperation(localFile, remoteFile, null, controlBlock);
