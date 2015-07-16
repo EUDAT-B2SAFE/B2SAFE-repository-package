@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd" >
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+	<appender name="console" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.PatternLayout">
+			<!-- param name="ConversionPattern" value="%5p - %m%n"/ -->
+			<param name="ConversionPattern" value="%m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="levelMin" value="INFO" />
+		</filter>
+	</appender>
+
+	<appender name="file-debug_isaac" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="${RP_LOG_DIR}/debug.log" />
+		<param name="Append" value="true" />
+		<param name="MaxFileSize" value="10MB" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c:%L - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="levelMin" value="DEBUG" />
+		</filter>
+	</appender>
+
+	<appender name="file-info_isaac" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="${RP_LOG_DIR}/info.log" />
+		<param name="Append" value="true" />
+		<param name="MaxFileSize" value="10MB" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c:%L - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="levelMin" value="INFO" />
+		</filter>
+	</appender>
+
+	<appender name="file-warning_isaac" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="${RP_LOG_DIR}/warning.log" />
+		<param name="Append" value="true" />
+		<param name="MaxFileSize" value="10MB" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c:%L - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="levelMin" value="WARN" />
+		</filter>
+	</appender>
+
+	<appender name="file-error_isaac" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="${RP_LOG_DIR}/error.log" />
+		<param name="Append" value="true" />
+		<param name="MaxFileSize" value="10MB" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c:%L - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="levelMin" value="ERROR" />
+		</filter>
+	</appender>
+
+	<logger name="fr.cines">
+		<appender-ref ref="file-debug_isaac" />
+		<appender-ref ref="file-info_isaac" />
+		<appender-ref ref="file-warning_isaac" />
+		<appender-ref ref="file-error_isaac" />
+	</logger>
+
+
+	<logger name="org.irods.jargon" additivity="false">
+		<appender-ref ref="file-error_isaac" />
+	</logger>
+
+  <root> 
+    <priority value ="${RP_LOG_LEVEL}" /> 
+  </root>
+	<!-- <logger name="fr.cines.isaac" additivity="false"> <appender-ref ref="console" 
+		/> </logger> -->
+
+</log4j:configuration>
