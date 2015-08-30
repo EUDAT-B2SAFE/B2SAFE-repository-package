@@ -208,13 +208,13 @@ class ReplicationServiceIrodsGenericImpl extends ReplicationService {
 		}
 	}
 
-	protected void retrieveFile(String remoteFileName, String localFileName) 
+	protected void retrieveFile(String remoteFileName, String localDirPath) 
 			throws ReplicationServiceException {
 		try {
 			if(overrideJargonProperties!=null) {
 				irodsFileSystem.getIrodsSession().setJargonProperties(overrideJargonProperties);
 			}		
-			File localFile = new File(localFileName);
+			File localFile = new File(localDirPath);
 
 			IRODSFileFactory irodsFileFactory = irodsFileSystem .getIRODSFileFactory(irodsAccount);
 
