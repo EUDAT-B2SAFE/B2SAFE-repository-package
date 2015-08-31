@@ -443,12 +443,18 @@ public class DataSet {
 			// Loop all the results
 			for (String doName:doFullPathList) {
 				DataObject tmpDO = new DataObject();
-
+				
+	            int lastSlash = doName.lastIndexOf("/");
+	            String dirName = doName.substring(0,lastSlash);
+	            String fileName = doName.substring(lastSlash+1);
+				
 				// set the DO information
-				tmpDO.setRemoteDirPath(doName);
+				tmpDO.setRemoteDirPath(dirName);
+				tmpDO.setFileName(fileName);
 				tmpDO.setRemoteDirPathIsAbsolute(true);
 				// set the DO metadata
 				tmpDO.setEudatMetadata(replicationService.getMetadataOfDataObject(doName));
+					            
 				// add DO to the list
 				doList.add(tmpDO);
 			}
